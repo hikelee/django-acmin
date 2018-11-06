@@ -43,7 +43,7 @@ def clear(cls):
 
 
 def patch():
-    if attr(settings, "ACMIN_ENABLE_CACHE") and False:
+    if attr(settings, "ACMIN_ENABLE_CACHE"):
         def unset_raw_connection(original):
             def inner(compiler, *args, **kwargs):
                 compiler.connection.raw = False
@@ -66,7 +66,8 @@ def patch():
                     if table_names:
                         cached_result = cache.get(md5)
                         if cached_result is not None:
-                            print("cache", cached_result)
+                            if attr(settings, "ACMIN_SHOW_CACHE_INFO"):
+                                logger.info(f"acmin-cache:{cached_result}")
                             return cached_result
 
                     result = original(compiler, *args, **kwargs)
