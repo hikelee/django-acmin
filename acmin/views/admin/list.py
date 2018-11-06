@@ -247,6 +247,6 @@ class AdminListView(
         context = super().get_context_data(**kwargs)
         context["view_type"] = 'list'
         context["media_url"] = attr(settings, "MEDIA_URL", "aaaa")
-        context["image_height"] = getattr(settings, "IMAGE_HEIGHT", 80)
+        context["image_height"] = getattr(settings, "ACMIN_IMAGE_HEIGHT", 80)
         context.update({"list_fields": self.get_list_fields(), })
         return context
