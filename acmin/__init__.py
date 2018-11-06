@@ -1,8 +1,3 @@
-VERSION = (0, 1, 7)
-__version__ = '.'.join(map(str, VERSION))
+from . import utils, views
 
 default_app_config = 'acmin.apps.AcminConfig'
-
-
-from . import utils
-from . import views
