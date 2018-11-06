@@ -21,7 +21,7 @@ def get_urlpatterns():
 
 def admin_route(path):
     from django.conf import settings
-    return route(path, f"{settings.ADMIN_PREFIX}/{settings.APP_NAME}" or "")
+    return route(path, f"{settings.ACMIN_ADMIN_PREFIX}/{settings.ACMIN_APP_NAME}" or "")
 
 
 def route(path, prefix=""):
