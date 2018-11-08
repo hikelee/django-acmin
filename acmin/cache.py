@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import traceback
 from collections import Iterable
 from functools import wraps
 
@@ -69,8 +70,8 @@ def patch():
                             if attr(settings, "ACMIN_SHOW_CACHE_INFO"):
                                 logger.info(f"acmin-cache:{cached_result}")
                             return cached_result
-                except BaseException as e:
-                    logger.error(f"acmin-error:{e}")
+                except:
+                    logger.error(traceback.format_exc())
 
                 result = original(compiler, *args, **kwargs)
                 if table_names:

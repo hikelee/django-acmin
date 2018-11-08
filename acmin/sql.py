@@ -30,7 +30,7 @@ def patch():
                     result = original(cursor, sql, *args, **kwargs)
                     return result
                 finally:
-                    logger.info(f"{threading.currentThread().ident} {sql},{args[0]}")
+                    logger.info(f"{threading.currentThread().ident} {sql},{args}")
                     pass
 
             return inner
@@ -43,10 +43,10 @@ def patch():
                     return original(compiler, *args, **kwargs)
                 finally:
                     s = compiler.as_sql()
-                    if type(s) is list:
+                    if type(s) is list and len(s) > 0:
                         s = s[0]
                     sql, params = s
-                    logger.info(f"{threading.currentThread().ident} {sql}, {params[0]}")
+                    logger.info(f"{threading.currentThread().ident} {sql}, {params}")
 
             return inner
 
