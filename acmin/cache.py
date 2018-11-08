@@ -6,6 +6,7 @@ from functools import wraps
 
 from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import EmptyResultSet
 from django.db.models.sql.compiler import SQLCompiler
 from django.utils.six import wraps
 
@@ -70,6 +71,8 @@ def patch():
                             if attr(settings, "ACMIN_SHOW_CACHE_INFO"):
                                 logger.info(f"acmin-cache:{cached_result}")
                             return cached_result
+                except EmptyResultSet:
+                    pass
                 except:
                     logger.error(traceback.format_exc())
 
