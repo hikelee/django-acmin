@@ -58,27 +58,27 @@ def patch():
             @wraps(original)
             @unset_raw_connection
             def inner(compiler, *args, **kwargs):
+                table_names = None
                 try:
                     s = f"{compiler.as_sql()}"
                     table_names = _table_names(s)
-                    md5 = hashlib.md5(bytes(s, "utf-8")).hexdigest()
-                    # print(table_names)
+                    md5 = hashlib.md5(s.encode()).hexdigest()
                     if table_names:
                         cached_result = cache.get(md5)
                         if cached_result is not None:
                             if attr(settings, "ACMIN_SHOW_CACHE_INFO"):
                                 logger.info(f"acmin-cache:{cached_result}")
                             return cached_result
+                except BaseException as e:
+                    logger.error(f"acmin-error:{e}")
 
-                    result = original(compiler, *args, **kwargs)
-                    if table_names:
-                        if result.__class__ not in {tuple, list, frozenset, set} and isinstance(result, Iterable):
-                            result = list(result)
-                        cache.set_many({md5: result})
+                result = original(compiler, *args, **kwargs)
+                if table_names:
+                    if result.__class__ not in {tuple, list, frozenset, set} and isinstance(result, Iterable):
+                        result = list(result)
+                    cache.set_many({md5: result})
 
-                    return result
-                finally:
-                    pass
+                return result
 
             return inner
 

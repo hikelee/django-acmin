@@ -11,7 +11,7 @@
                 clearOptions('#id_{{ os.name }}');
             {% endfor %}
             var value = $(this).val();
-            var url = '/{{ app_name }}/{{ r.child.class_name }}/?format=json&{{ r.name }}=' + value;
+            var url = '{{ url_prefix }}/{{ r.child.class_name }}/?format=json&{{ r.name }}=' + value;
             {% for k,v in r.child.filters.items %}
                 url = url + "&" + "{{k}}=" + "{{v}}";
             {% endfor %}

@@ -1,7 +1,7 @@
 import json
+import os
 import platform
 
-from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 
 from .decorators import memorize
@@ -25,20 +25,21 @@ def is_windows() -> bool:
 
 @memorize
 def get_ip():
-    if settings.DEBUG:
-        return "127.0.0.1"
+    file = '/data/host'
+    if os.path.exists(file):
+        with open(file, 'r') as f:
+            return f.readline().strip()
 
-    with open('/data/host', 'r') as f:
-        return f.readline().strip()
+    return "127.0.0.1"
 
 
 @memorize
 def get_domain():
-    if settings.DEBUG:
-        return "localhost"
-
-    with open('/data/domain', 'r') as f:
-        return f.readline().strip()
+    file = '/data/domain'
+    if os.path.exists(file):
+        with open(file, 'r') as f:
+            return f.readline().strip()
+    return "localhost"
 
 
 def null_to_emtpy(data):
