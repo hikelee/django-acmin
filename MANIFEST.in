@@ -4,4 +4,4 @@ include CHANGELOG.rst
 include requirements.txt
 recursive-include acmin *.py
 recursive-include acmin/static *
-recursive-include polls/templates *
+recursive-include acmin/templates *

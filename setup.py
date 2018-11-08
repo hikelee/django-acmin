@@ -2,18 +2,16 @@
 
 import os
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-from acmin import __version__
+version = "0.1.13"
 
-CURRENT_PATH = os.path.abspath(os.path.dirname(__file__))
-
-with open(os.path.join(CURRENT_PATH, 'requirements.txt')) as f:
+with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'requirements.txt')) as f:
     required = f.read().splitlines()
 
 setup(
     name='django-acmin',
-    version=__version__,
+    version=version,
     author='Hike Li',
     author_email='hikelee@gmail.com',
     url='https://github.com/hikelee/django-acmin',
