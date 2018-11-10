@@ -1,0 +1,10 @@
+{% extends 'index/index.html' %}
+{% load resource %}
+{% block prescript %}
+    <script type="text/javascript">
+        window.defaultNode = "/User";
+        window.urlPrefix = "{{ url_prefix }}";
+    </script>
+    <script src="{% resource 'js/control.js'%}"></script>
+    <script src="{% resource 'js/LodopFuncs.js'%}"></script>
+{% endblock %}
