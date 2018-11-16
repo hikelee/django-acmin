@@ -10,7 +10,7 @@ from acmin.utils import attr
 
 app_name = __name__.split(".")[0]
 full_nodes = [
-    ("基础信息", ["User", ]),
+    ("基础信息", ["User", "Province", "City", "Area", "Address", "Member", "Author", "Book", "Order"]),
 ]
 
 

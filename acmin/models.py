@@ -1,3 +1,5 @@
+from django.db import models
+
 from .utils import import_class
 
 
@@ -13,6 +15,9 @@ class ModelMixin:
     @property
     def color(self):
         return "black"
+
+
+
 
 
 def import_model(app_name, name):
