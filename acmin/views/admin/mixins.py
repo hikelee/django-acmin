@@ -55,50 +55,46 @@ class ContextMixin(object):
     def user(self):
         return attr(self, "request.user")
 
-    @property
     def is_creatable(self) -> bool:
         return self.model.creatable
 
-    @property
     def is_cloneable(self) -> bool:
-        return self.is_creatable
+        return self.model.cloneable
 
-    @property
     def is_exportable(self) -> bool:
-        return True
+        return self.model.exportable
 
-    @property
     def is_editable(self) -> bool:
         return self.model.editable
 
-    @property
     def is_removable(self) -> bool:
         return self.model.removable
 
-    @property
-    def is_viewable(self) -> bool:  # 是否可以查看详情页,但不能编辑
-        return True
+    def is_viewable(self) -> bool:
+        return self.model.viewable
 
-    @property
     def is_operable(self) -> bool:
-        return self.is_editable or self.is_removable
+        return self.model.operable
 
-    @property
     def is_selectable(self) -> bool:
-        return False
+        return self.model.selectable
+
+    def is_show_index(self) -> bool:
+        return self.model.show_index
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs) or {}
         context.update({
             'model_name': self.model.__name__,
             'model_verbose_name': attr(self, 'model._meta.verbose_name'),
-            'creatable': self.is_creatable,
-            'cloneable': self.is_cloneable,
-            'editable': self.is_editable,
-            'viewable': self.is_editable,
-            'removable': self.is_removable,
-            'operable': self.is_operable,
-            'exportable': self.is_exportable,
-            "selectable": self.is_selectable,
+            'creatable': self.is_creatable(),
+            'cloneable': self.is_cloneable(),
+            'editable': self.is_editable(),
+            'viewable': self.is_viewable(),
+            'removable': self.is_removable(),
+            'operable': self.is_operable(),
+            'exportable': self.is_exportable(),
+            "selectable": self.is_selectable(),
+            "show_index": self.is_show_index(),
         })
         return context

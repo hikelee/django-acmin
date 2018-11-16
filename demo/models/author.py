@@ -1,14 +1,15 @@
 from django.db import models
 
+from .address import Address
 from .base import BaseModel
 
 
 class Author(BaseModel):
-    from .address import Address
     search_fields = ['name']
 
     class Meta:
         ordering = ['-id']
+        verbose_name = verbose_name_plural = "作者"
 
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
-    name = models.CharField(max_length=50)
+    name = models.CharField("名称", max_length=50)

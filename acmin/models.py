@@ -1,23 +1,30 @@
-from django.db import models
+from django.urls import reverse
 
 from .utils import import_class
 
 
 class ModelMixin:
-    def get_absolute_url(self):
-        from django.urls import reverse
-        cls = self.__class__
-        return reverse(cls.__name__ + "-update", kwargs={"pk": self.pk})
+    creatable = True
+    editable = True
+    removable = True
+    cloneable = True
+    exportable = True
+    viewable = True
+    operable = True
+    selectable = False
+    show_index = False
+    search_fields = []
+    list_exclude = []
+    list_fields = []
+    form_exclude = []
+    form_fields = []
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+    def get_absolute_url(self):
+        return reverse(self.__class__.__name__ + "-update", kwargs={"pk": self.pk})
 
     @property
     def color(self):
         return "black"
-
-
-
 
 
 def import_model(app_name, name):
