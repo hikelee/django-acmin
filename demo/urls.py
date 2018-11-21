@@ -15,6 +15,10 @@ app_name = __name__.split(".")[0]
 models = [model.__name__ for model in django.apps.apps.get_models() if
           model.__module__.startswith(app_name)]
 
+from demo.models.order import Order
+from acmin.utils.models import get_multiple_relation_group
+
+get_multiple_relation_group(Order)
 
 def get_patterns():
     urlpatterns = get_urlpatterns()

@@ -3,13 +3,15 @@ import time
 import django.apps
 import requests
 from django.core.management.base import BaseCommand
-from demo.models import Province, City, Area, Address, Author, Book, Member, User,Order
-# python manage.py initdata
+from demo.models import Province, City, Area, Address, Author, Book, Member, User, Order
 
 
 class Command(BaseCommand):
+    """
+        python manage.py initdata
+    """
     def handle(self, *args, **options):
-        for model in [Province, City, Area, Address, Author, Book, Member, User,Order]:
+        for model in [Province, City, Area, Address, Author, Book, Member, User, Order]:
             model.objects.all().delete()
         province = Province.objects.create(name="广东省")
         city = City.objects.create(province=province, name="深圳市")
@@ -22,5 +24,6 @@ class Command(BaseCommand):
             'admin', 'emailname@demon.com', '123456')
         user.title = "admin"
         user.save()
-        Order.objects.create(follower=user, address=address,member=member, book=book, amount=2)
+        Order.objects.create(follower=user, address=address,
+                             member=member, book=book, amount=2)
         print("ok")
