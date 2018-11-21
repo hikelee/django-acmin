@@ -14,3 +14,7 @@ class Book(BaseModel):
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
     name = models.CharField("名称", max_length=50)
     price = models.FloatField("价格")
+
+    def __str__(self):
+        return self.name
+    

@@ -4,7 +4,7 @@ from .address import Address
 from .base import BaseModel
 from .book import Book
 from .user import User
-
+from .member import Member
 
 class Order(BaseModel):
     search_fields = ['name']
@@ -17,8 +17,10 @@ class Order(BaseModel):
 
     follower = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="跟踪订单用户")
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     amount = models.FloatField("数量")
+
 
     def __str__(self):
         return str(self.id)

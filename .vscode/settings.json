@@ -1,0 +1,10 @@
+{
+    "python.pythonPath": "~/.virtualenvs/acmin/bin/python3",
+    "editor.fontFamily": "'Source Code Pro'",
+    "editor.fontSize": 12,
+    "files.exclude": {
+        "**/__pycache__": true, 
+        "*.settings": true,        
+        "**/*.pyc": true,//所有pyc文件
+    }  
+}

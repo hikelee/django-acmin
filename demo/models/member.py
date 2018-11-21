@@ -11,3 +11,7 @@ class Member(BaseModel):
         verbose_name = verbose_name_plural = "会员"
 
     name = models.CharField("名称", max_length=50)
+
+    def __str__(self):
+        return self.name
+    
