@@ -20,7 +20,7 @@ class SearchMixin(BaseListView):
     def get_toolbar_search_params(self):
         groups = model_util.get_relation_group(self.model)
         if groups:
-            relation_names = [x[0] for x in reduce(operator.add, groups)]
+            relation_names = [x.attribute for x in reduce(operator.add, groups)]
             return {k: v for k, v in self.request.GET.items() if k in relation_names and v}
         return {}
 
@@ -88,7 +88,10 @@ class ToolbarSearchFormMixin(SearchMixin, StaticFilterMixin):
         for relations in relation_groups:
             last_cls, last_name = None, None
             relations = list(reversed(relations))
-            for name, cls in relations:
+            for relation in relations:
+                name = relation.attribute
+                cls = relation.model
+                print(name,cls)
                 queryset = None
                 if last_name:
                     value = params.get(last_name, None)
@@ -134,10 +137,10 @@ class ToolbarSearchMixin(SearchMixin):
         queryset = super().get_queryset()
         params = self.get_toolbar_search_params()
         for relations in model_util.get_relation_group(self.model):
-            for attribute, cls in relations:
-                value = params.get(attribute, None)
+            for relation in relations:
+                value = params.get(relation.attribute, None)
                 if value:
-                    queryset = queryset.filter(**{attribute.replace(".", "__") + "_id": value})
+                    queryset = queryset.filter(**{relation.attribute.replace(".", "__") + "_id": value})
                     break
 
         model_filters = self.get_request_model_filters()
@@ -230,8 +233,8 @@ class AdminListView(
 
     def get_relation_fields(self):
         from acmin.utils import models
-        fields = [model_util.Field(attribute_name.split(".").pop(), attr(clazz, "_meta.verbose_name"), attribute_name, clazz.__name__)
-                  for relations in models.get_relation_group(self.model) for attribute_name, clazz in relations]
+        fields = [model_util.Field(relation.attribute.split(".").pop(), relation.verbose_name, relation.attribute, relation.model.__name__)
+                  for relations in models.get_relation_group(self.model) for relation in relations]
 
         fields.reverse()
         return fields

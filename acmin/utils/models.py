@@ -1,89 +1,69 @@
-import collections
-
-import django.apps
 from django.db.models.fields.related import ForeignKey
 
 from . import attr, auto_repr, first, memorize
 
 
+class Relation:
+    def __init__(self, model, attribute, verbose_name):
+        self.model = model
+        self.attribute = attribute
+        self.verbose_name = verbose_name
+
+
+def get_relation1(model):
+    relations = []
+    fields = attr(model, '_meta.fields')
+    for field in fields:
+        remote_field = attr(field, "remote_field")
+        if remote_field:
+            related_model = attr(remote_field, "model")
+            field = attr(remote_field, "field")
+            if type(field) is ForeignKey:
+                relations.append((related_model, attr(field, "name")))
+    return relations
+
+
+def _get_attributes(model, name=None):
+    relations = get_relation1(model)
+    names = []
+    for relation_model, relation_attribute in relations:
+        new_name = f"{name}.{relation_attribute}" if name else relation_attribute
+        new_names = _get_attributes(relation_model, new_name)
+        if new_names:
+            names += new_names
+        else:
+            names.append(new_name)
+
+    return names
+
+
 @memorize
-def get_all_model_relations():
-    class Relation:
-        def __init__(self, model, attribute, verbose_name):
-            self.attribute = attribute
-            self.model = model
-            self.verbose_name = verbose_name
-
-    models = django.apps.apps.get_models()
-
-    def init_model_relations():
-        for model in models:
-            fields = attr(model, '_meta.fields')
-            for field in fields:
-                remote_field = attr(field, "remote_field")
-                if remote_field:
-                    related_model = attr(remote_field, "model")
-                    field = attr(remote_field, "field")
-                    if type(field) is ForeignKey:
-                        relations = attr(model, "relations", [])
-                        relations.append(Relation(related_model, attr(field, "name"), attr(field, "verbose_name")))
-                        setattr(model, "relations", relations)
-
-    init_model_relations()
-
-    def _get_attributes(model, name=None):
-        relations = attr(model, "relations", [])
-        names = []
-        for relation in relations:
-            new_name = f"{name}.{relation.attribute}" if name else relation.attribute
-            new_names = _get_attributes(relation.model, new_name)
-            if new_names:
-                names += new_names
-            else:
-                names.append(new_name)
-
-        return names
-
-    def get_field_relation_model(model, attribute):
-        _cls = model
-        for name in attribute.split("."):
-            field = attr(_cls, f"{name}.field")
-            _cls = attr(field, f"remote_field.model")
-        return _cls
-
-    def _get_all(model):
-        _result = []
-        attributes = _get_attributes(model)
-        if attributes:
-            for attribute in attributes:
-                names = attribute.split(".")
-                for i in range(1, len(names) + 1):
-                    sub_attribute = ".".join(names[0:i])
-                    cls = get_field_relation_model(model, sub_attribute)
-                    _result.append((sub_attribute, cls))
-        return _result
-
-    result = collections.OrderedDict()
-    for model in models:
-        relations = _get_all(model)
-        groups, group = [], []
-        last_attribute = None
-        for relation in relations:
-            if not group or relation[0].startswith(last_attribute):
-                group.append(relation)
-            elif group:
-                groups.append(group)
-                group = [relation]
-            last_attribute = relation[0]
-        if group:
-            groups.append(group)
-        result[model] = groups
-
-    return result
-
-
 def get_relation_group(model):
-    return get_all_model_relations().get(model)
+    group, relations = [], []
+    last_attribute = None
+    for attribute in _get_attributes(model):
+        names = attribute.split(".")
+        for i in range(1, len(names) + 1):
+            sub_attribute, cls, verbose_name = ".".join(names[0:i]), model, None
+            for name in sub_attribute.split("."):
+                field = attr(cls, f"{name}.field")
+                verbose_name = attr(field, "_verbose_name")
+                cls = attr(field, f"remote_field.model")
+            if not verbose_name:
+                verbose_name = attr(cls, "_meta.verbose_name")
+            print(verbose_name)
+            relation = Relation(cls, sub_attribute, verbose_name)
+            if not relations or sub_attribute.startswith(last_attribute):
+                relations.append(relation)
+            elif relations:
+                group.append(relations)
+                relations = [relation]
+            last_attribute = sub_attribute
+
+    if relations:
+        group.append(relations)
+
+    return group
 
 
 @memorize

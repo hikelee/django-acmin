@@ -3,6 +3,7 @@ from django.db import models
 from .address import Address
 from .base import BaseModel
 from .book import Book
+from .user import User
 
 
 class Order(BaseModel):
@@ -14,6 +15,7 @@ class Order(BaseModel):
         ordering = ['-id']
         verbose_name = verbose_name_plural = "订单"
 
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="跟踪订单用户")
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     amount = models.FloatField("数量")
