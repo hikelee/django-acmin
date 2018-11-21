@@ -63,7 +63,7 @@
                                                         {% if selectable %}
                                                             <input type="checkbox" name="id_checkbox" value="{{ field.id }}"/>
                                                         {% endif %}
-                                                        {% if viewable or editable %}
+                                                        {% if viewable  %}
                                                             <a href="#!name=/{{ model_name }}/{{ m.id }}/">查看</a>
                                                         {% endif %}
                                                         {% if removable %}
@@ -83,15 +83,13 @@
                                         {% for field in list_fields %}
                                             <td style="color:{{ m.color }}">
                                                 {% block field-td %}
-                                                    {% if field.class_name and editable %}
+                                                    {% if field.class_name and viewable %}
                                                         {% with id=field.attribute_name|add:".id" %}
                                                             <a href="#!name=/{{ field.class_name }}/{{ m|attr:id }}/">
                                                                 {{ m|display:field.attribute_name|truncate }}
-
                                                             </a>
                                                         {% endwith %}
                                                     {% else %}
-
                                                         {{ m|display:field.attribute_name|truncate }}
                                                     {% endif %}
                                                 {% endblock %}

@@ -13,11 +13,11 @@ class ModelMixin:
     operable = True
     selectable = False
     show_index = False
-    search_fields = []
-    list_exclude = []
-    list_fields = []
-    form_exclude = []
-    form_fields = []
+    search_fields = None
+    list_exclude = None
+    list_fields = None
+    form_exclude = None
+    form_fields = None
 
     def get_absolute_url(self):
         return reverse(self.__class__.__name__ + "-update", kwargs={"pk": self.pk})
