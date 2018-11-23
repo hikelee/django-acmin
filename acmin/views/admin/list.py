@@ -91,7 +91,7 @@ class ToolbarSearchFormMixin(SearchMixin, StaticFilterMixin):
             for relation in relations:
                 name = relation.attribute
                 cls = relation.model
-                print(name,cls)
+                #print(name,cls)
                 queryset = None
                 if last_name:
                     value = params.get(last_name, None)

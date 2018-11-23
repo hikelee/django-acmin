@@ -1,3 +1,6 @@
+import datetime
+
+
 def attr2(obj, name, default, show_display=False):
     result = None
     if isinstance(obj, dict):
@@ -40,7 +43,6 @@ get = attr
 
 
 def set(obj, name, value):
-    # obj.name = value
     setattr(obj, name, value)
     return obj
 
@@ -49,5 +51,6 @@ def display(obj, attr_name):
     result = attr(obj, attr_name, default="", show_display=True)
     if isinstance(result, bool):
         result = "是" if result else '否'
-
+    elif isinstance(result, datetime.datetime):
+        result = result.strftime("%Y-%m-%d %H:%M:%S")
     return result
