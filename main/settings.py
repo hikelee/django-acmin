@@ -28,7 +28,7 @@ DATE_TIME_FORMAT = '%Y-%m-%d'
 PAGINATE_BY = 10
 START_TIME = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
-AUTH_USER_MODEL = f'{APP_NAME}.User'
+AUTH_USER_MODEL = f'acmin.User'
 LOGIN_URL = f'/{ADMIN_PREFIX}/{APP_NAME}/user/login/'
 INDEX_URL = f'/{ADMIN_PREFIX}/{APP_NAME}/'
 MIDDLEWARE = [
@@ -151,8 +151,8 @@ CACHES = {
 
 SQLITE_DATABASE = {'default': {
     'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': F"{BASE_DIR}/app.db",
-    'TEST_NAME': F"{BASE_DIR}/app-test.db",
+    'NAME': F"{BASE_DIR}/1.db",
+    'TEST_NAME': F"{BASE_DIR}/1-test.db",
 }}
 
 DATABASES = SQLITE_DATABASE

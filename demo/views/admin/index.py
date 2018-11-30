@@ -5,28 +5,22 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.template import loader
 
-from acmin.models import import_model
+from acmin import models  as m
 from acmin.utils import attr
+from demo.models import *
 
 app_name = __name__.split(".")[0]
 full_nodes = [
-    ("基础信息", ["User", "Province", "City", "Area", "Address", "Member", "Author", "Book", "Order"]),
+    ("基础信息", [m.Group, m.User, m.KeyValue, m.Model, m.GroupFilter, m.UserFilter]),
+    ("业务信息", [Province, City, Area, Address, Member, Author, Book, Order]),
 ]
 
 
 def get_nodes(user):
-    def to_tuple(node):
-        if not isinstance(node, tuple):
-            model = import_model(app_name, node)
-            node = (node, attr(model, '_meta.verbose_name'))
-        return node
-
     result = []
-    for (name, nodes) in full_nodes:
-        nodes = [to_tuple(node) for node in nodes]
-        nodes = [node[0:2] for node in nodes]
-        if nodes:
-            result.append((name, nodes))
+    for name, models in full_nodes:
+        result.append((name, [(model.__name__, attr(model, "_meta.verbose_name")) for model in models]))
+
     return result
 
 

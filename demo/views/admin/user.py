@@ -11,7 +11,7 @@ from django.views.generic import FormView
 
 from acmin.utils import attr
 from demo.forms.user import LoginForm, UserForm
-from demo.models import User
+from acmin.models import User
 from . import BaseCreateView, BaseListView, BaseUpdateView
 
 

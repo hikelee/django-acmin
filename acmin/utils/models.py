@@ -3,6 +3,9 @@ import collections
 from . import attr, auto_repr, first, memorize
 
 
+
+
+
 class Relation(object):
     def __init__(self, model, attribute, verbose_name):
         self.model = model
@@ -70,11 +73,7 @@ def get_multiple_relation_group(model):
         if new_relations:
             result.append(new_relations)
     
-    for relations in group:
-        print(relations)
-    print("----------------------------")
-    for relations in result:
-        print(relations)
+
 
     return result
 

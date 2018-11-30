@@ -3,7 +3,7 @@ from django.db import models
 from .address import Address
 from .base import BaseModel
 from .book import Book
-from .user import User
+from acmin.models import User
 from .member import Member
 
 class Order(BaseModel):

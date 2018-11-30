@@ -12,20 +12,17 @@ from demo.views.admin import index as main_index, user
 
 app_name = __name__.split(".")[0]
 
-models = [model.__name__ for model in django.apps.apps.get_models() if
-          model.__module__.startswith(app_name)]
+models = [model for model in django.apps.apps.get_models() if
+          model.__module__.startswith(app_name) or model.__module__.startswith("acmin")]
 
-from demo.models.order import Order
-from acmin.utils.models import get_multiple_relation_group
-
-get_multiple_relation_group(Order)
 
 def get_patterns():
     urlpatterns = get_urlpatterns()
     admin_prefix = attr(settings, 'ADMIN_PREFIX')
-    for name in models:
+    for model in models:
+        name = model.__name__
         prefix = f'{admin_prefix}/{app_name}/{name}'
-        view = partial(get_view, app_name, name)
+        view = partial(get_view, model)
         urlpatterns += [
             path(f'{prefix}/', view("list"), name=f'{name}-list'),
             path(f'{prefix}/export/', view("export"), name=f'{name}-export'),

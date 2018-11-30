@@ -2,14 +2,13 @@ from acmin.utils import attr
 from django.db import models
 from python_utils import converters
 
-from .base import BaseModel
+from .base import AcminModel
 
 
-class KeyValue(BaseModel):
+class KeyValue(AcminModel):
     search_fields = ['key', 'value']
 
     class Meta:
-        ordering = ['-id']
         verbose_name = verbose_name_plural = '键值对'
 
     key = models.CharField('Key', max_length=50, unique=True)

@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.forms import ModelForm, widgets
 
-from demo.models import User
+from acmin.models import User
 
 app_name = __name__.split(".")[0]
 

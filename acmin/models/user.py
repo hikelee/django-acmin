@@ -1,17 +1,17 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from acmin.models import ModelMixin
+from .base import AcminModel
+from .group import Group
 
 
-class User(ModelMixin, AbstractUser):
+class User(AbstractUser, AcminModel):
+    list_fields = form_fields = search_fields = ['group', 'username', 'title']
+
     class Meta:
-        ordering = ['-id']
         verbose_name_plural = verbose_name = "用户"
 
-    creatable = editable = removable = True
-    list_fields = form_fields = search_fields = ['username', 'title']
-
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
     title = models.CharField('名称', max_length=50, blank=False, null=False)
 
     def __str__(self):

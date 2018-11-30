@@ -1,5 +1,7 @@
 import logging
 
+from django.conf import settings
+
 from acmin.forms import load_form
 from acmin.utils import attrs, memorize, import_class
 
@@ -11,17 +13,16 @@ def get_base_view_class(app_name, action):
     return import_class(f"{app_name}.views.Base{action.capitalize()}View")
 
 
-def get_view(app_name, name, action):
-    view_name = "%s%sView" % (name, action.capitalize())
+def get_view(model, action):
+    app_name = settings.APP_NAME
+    view_name = "%s%sView" % (model.__name__, action.capitalize())
     view = None
     try:
         view = import_class('%s.views.%s' % (app_name, view_name))
     except Exception:
         try:
-            model_name = "%s.models.%s" % (app_name, name)
-            entity = import_class(model_name)
             view = type("Dynamic%s" % view_name, (get_base_view_class(app_name, action),), dict(
-                model=entity,
+                model=model,
                 __module__=f'{app_name}.{__name__}',
 
             ))

@@ -56,35 +56,36 @@ class ContextMixin(object):
         return attr(self, "request.user")
 
     def is_creatable(self) -> bool:
-        return self.model.creatable
+        return True
 
     def is_cloneable(self) -> bool:
-        return self.model.cloneable
+        return True
 
     def is_exportable(self) -> bool:
-        return self.model.exportable
+        return True
 
     def is_editable(self) -> bool:
-        return self.model.editable
+        return True
 
     def is_removable(self) -> bool:
-        return self.model.removable
+        return True
 
     def is_viewable(self) -> bool:
-        return self.model.viewable
+        return True
 
     def is_operable(self) -> bool:
-        return self.model.operable
+        return True
 
     def is_selectable(self) -> bool:
-        return self.model.selectable
+        return True
 
     def is_show_index(self) -> bool:
-        return self.model.show_index
+        return False
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs) or {}
         context.update({
+            'model': self.model,
             'model_name': self.model.__name__,
             'model_verbose_name': attr(self, 'model._meta.verbose_name'),
             'creatable': self.is_creatable(),

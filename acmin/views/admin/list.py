@@ -91,7 +91,7 @@ class ToolbarSearchFormMixin(SearchMixin, StaticFilterMixin):
             for relation in relations:
                 name = relation.attribute
                 cls = relation.model
-                #print(name,cls)
+                # print(name,cls)
                 queryset = None
                 if last_name:
                     value = params.get(last_name, None)
@@ -213,7 +213,7 @@ class AdminListView(
         if names == '__all__' or not names:
             names = [f.name for f in model_fields]
         excludes = self.get_model_exclude_names()
-        excludes = excludes + ['id', 'created', 'modified'] + [
+        excludes = excludes + [
             f.name for f in model_fields if f.related_model
         ]
         result = []

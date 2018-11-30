@@ -8,6 +8,28 @@ def import_class(name):
     return getattr(module, class_name)
 
 
+def import_model(app_name, name):
+    from django.apps import apps as django_apps
+    if isinstance(name, str):
+        result = None
+        if "." in name:  # "hotel.Channel"
+            result = django_apps.get_model(name)
+        if not result:
+            try:
+                result = django_apps.get_model(app_name, name.lower())
+            except Exception:
+                pass
+        if not result:
+            try:
+                result = import_class("%s.models.%s" % (app_name, name.capitalize()))
+            except Exception:
+                pass
+
+        if result:
+            return result
+        raise Exception(f"Cannot import model by {app_name} {name}")
+
+
 class ModuleProxyCache(dict):
     def __missing__(self, key):
         if '.' not in key:

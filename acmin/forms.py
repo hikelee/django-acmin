@@ -1,7 +1,6 @@
 from django import forms
 
-from acmin.models import import_model
-from acmin.utils import attrs, import_class, memorize
+from acmin.utils import attrs, import_class, memorize, import_model
 
 
 def get_dynamic_form(app_name, model, form_exclude=None):
