@@ -3,6 +3,9 @@ from .area import Area
 from .author import Author
 from .book import Book
 from .city import City
+from .clickfarming import ClickFarming
+from .expenditure import Expenditure
 from .member import Member
 from .order import Order
+from .platform import Platform
 from .province import Province

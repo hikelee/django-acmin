@@ -1,4 +1,5 @@
 import operator
+import traceback
 from collections import OrderedDict
 from functools import reduce
 
@@ -9,6 +10,7 @@ from django.http import JsonResponse
 from django.views import generic
 from django.views.generic.list import BaseListView
 
+from acmin.models.filter import GroupFilter, FilterValueType, UserFilter
 from acmin.utils import (
     attr, first, get_ancestor_attribute, get_ancestors, get_ancestors_names, get_model_field_names
 )
@@ -252,4 +254,25 @@ class AdminListView(
         context["media_url"] = attr(settings, "MEDIA_URL", "aaaa")
         context["image_height"] = getattr(settings, "ACMIN_IMAGE_HEIGHT", 80)
         context.update({"list_fields": self.get_list_fields(), })
+
+        for obj in context.get("list"):
+            setattr(obj, "_request", self.request)
+
         return context
+
+    def get_queryset(self):
+        query = super().get_queryset()
+        filters = {}
+        user_filters = list(UserFilter.objects.filter(user=self.request.user, model__name=self.model.__name__))
+        group_filters = list(GroupFilter.objects.filter(group__user=self.request.user, model__name=self.model.__name__))
+        for f in user_filters + group_filters:
+            value = f.value
+            if f.value_type == FilterValueType.view_attribute:
+                value = attr(self, value)
+            if value is not None:
+                filters[f.attribute] = value
+        try:
+            query = query.filter(**filters)
+        except:
+            traceback.print_exc()
+        return query

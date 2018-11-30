@@ -5,23 +5,17 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.template import loader
 
-from acmin import models  as m
+from acmin import models as m
 from acmin.utils import attr
 from demo.models import *
 
-app_name = __name__.split(".")[0]
-full_nodes = [
-    ("基础信息", [m.Group, m.User, m.KeyValue, m.Model, m.GroupFilter, m.UserFilter]),
-    ("业务信息", [Province, City, Area, Address, Member, Author, Book, Order]),
-]
-
 
 def get_nodes(user):
-    result = []
-    for name, models in full_nodes:
-        result.append((name, [(model.__name__, attr(model, "_meta.verbose_name")) for model in models]))
-
-    return result
+    nodes = [
+        ("基础信息", [m.Group, m.User, m.KeyValue, m.Model, m.GroupFilter, m.UserFilter]),
+        ("业务信息", [Platform, ClickFarming, Expenditure, Province, City, Area, Address, Member, Author, Book, Order]),
+    ]
+    return [(name, [(model.__name__, attr(model, "_meta.verbose_name")) for model in models]) for name, models in nodes]
 
 
 @login_required

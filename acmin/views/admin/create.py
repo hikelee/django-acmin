@@ -11,5 +11,8 @@ class AdminCreateView(AdminFormView, CreateView):
         context = super().get_context_data(**kwargs)
         context["form_action"] = reverse(f'{self.model.__name__}-create')
         context["view_type"] = 'create'
-        context["object"] = self.model
+        obj = self.model
+        setattr(obj, "_request", self.request)
+        context["object"] = obj
+
         return context

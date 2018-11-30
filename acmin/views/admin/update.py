@@ -16,4 +16,6 @@ class AdminUpdateView(AdminFormView, UpdateView):
             obj = context["object"]
             obj.id = ""
             context["form_action"] = reverse(f'{self.model.__name__}-create')
+
+        setattr(context.get('object'), "_request", self.request)
         return context

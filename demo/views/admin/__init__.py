@@ -2,26 +2,23 @@ from acmin.utils import import_submodules
 from acmin.views import *
 
 
- 
-
-
-class BaseCreateView( AdminCreateView):
+class BaseCreateView(AdminCreateView):
     pass
 
 
-class BaseUpdateView( AdminUpdateView):
+class BaseUpdateView(AdminUpdateView):
     pass
 
 
-class BaseListView( AdminListView):
+class BaseListView(AdminListView):
     pass
 
 
-class BaseExportView( AdminExportView):
+class BaseExportView(AdminExportView):
     pass
 
 
-class BaseDeleteView( AdminDeleteView):
+class BaseDeleteView(AdminDeleteView):
     pass
 
 
