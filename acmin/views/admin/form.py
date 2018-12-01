@@ -3,11 +3,19 @@ from collections import OrderedDict
 from django.contrib.messages.views import SuccessMessageMixin
 from django.forms import ChoiceField
 
+from acmin.models import BasePermission, PermissionItem
 from acmin.utils import attr, get_ancestor_attribute, get_ancestors, get_ancestors_names
-from .mixins import StaticFilterMixin,ContextMixin,AccessMixin
+from .mixins import StaticFilterMixin, ContextMixin, AccessMixin
 
 
-class AdminFormView(SuccessMessageMixin, StaticFilterMixin,ContextMixin,AccessMixin):
+class AdminFormView(SuccessMessageMixin, StaticFilterMixin, ContextMixin, AccessMixin):
+
+    def post(self, request, *args, **kwargs):
+        if BasePermission.has_permission(self.request.user, self.model, PermissionItem.savable):
+            return super().post(request, *args, **kwargs)
+        else:
+            return self.handle_no_permission()
+
     def get_template_names(self):
         return [f"admin/{self.model.__name__}/form.html", 'base/form.html']
 

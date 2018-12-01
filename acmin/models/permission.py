@@ -6,6 +6,19 @@ from .model import Model
 from .user import User
 
 
+class PermissionItem:
+    creatable = "creatable"
+    savable = "savable"
+    removable = "removable"
+    cloneable = "cloneable"
+    exportable = "exportable"
+    viewable = "viewable"
+    listable = "listable"
+
+
+VALID_ITEMS = set([key for key, _ in vars(PermissionItem).items() if not key.startswith("_")])
+
+
 class BasePermission(AcminModel):
     class Meta:
         abstract = True
@@ -24,6 +37,23 @@ class BasePermission(AcminModel):
     @property
     def operable(self):
         return self.viewable or self.removable or self.cloneable
+
+    @staticmethod
+    def has_permission(user, model, item):
+        if item in VALID_ITEMS:
+            group_filters = {
+                'group__user': user,
+                'model__name__in': [model.__name__, SuperPermissionModel.__name__],
+                item: True
+            }
+            user_filters = {
+                'user': user,
+                'model__name__in': [model.__name__, SuperPermissionModel.__name__],
+                item: True
+            }
+            if GroupPermission.objects.filter(**group_filters).first() or UserPermission.objects.filter(
+                    **user_filters).first():
+                return True
 
 
 class GroupPermission(BasePermission):

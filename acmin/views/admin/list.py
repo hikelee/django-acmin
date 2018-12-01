@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.views import generic
 from django.views.generic.list import BaseListView
 
-from acmin.models.filter import GroupFilter, FilterValueType, UserFilter
+from acmin.models import BasePermission, PermissionItem, GroupFilter, FilterValueType, UserFilter
 from acmin.utils import (
     attr, first, get_ancestor_attribute, get_ancestors, get_ancestors_names, get_model_field_names
 )
@@ -235,7 +235,8 @@ class AdminListView(
 
     def get_relation_fields(self):
         from acmin.utils import models
-        fields = [model_util.Field(relation.attribute.split(".").pop(), relation.verbose_name, relation.attribute, relation.model.__name__)
+        fields = [model_util.Field(relation.attribute.split(".").pop(), relation.verbose_name, relation.attribute,
+                                   relation.model.__name__)
                   for relations in models.get_relation_group(self.model) for relation in relations]
 
         fields.reverse()
@@ -248,13 +249,8 @@ class AdminListView(
         return [f'admin/{self.model.__name__}/list.html', 'base/list.html']
 
     def get_context_data(self, **kwargs):
-        from django.conf import settings
         context = super().get_context_data(**kwargs)
-        context["view_type"] = 'list'
-        context["media_url"] = attr(settings, "MEDIA_URL", "aaaa")
-        context["image_height"] = getattr(settings, "ACMIN_IMAGE_HEIGHT", 80)
-        context.update({"list_fields": self.get_list_fields(), })
-
+        context.update({"list_fields": self.get_list_fields()})
         for obj in context.get("list"):
             setattr(obj, "_request", self.request)
 
@@ -276,3 +272,6 @@ class AdminListView(
         except:
             traceback.print_exc()
         return query
+
+    def has_permission(self):
+        return BasePermission.has_permission(self.request.user, self.model, PermissionItem.listable)

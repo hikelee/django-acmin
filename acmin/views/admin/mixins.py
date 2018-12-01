@@ -33,12 +33,12 @@ class AccessMixin:
         return redirect_to_login(self.request.get_full_path(), self.get_login_url(), self.get_redirect_field_name())
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and self.has_permisson():
+        if request.user.is_authenticated and self.has_permission():
             return super().dispatch(request, *args, **kwargs)
         else:
             return self.handle_no_permission()
 
-    def has_permisson(self):
+    def has_permission(self):
         return True
 
 
