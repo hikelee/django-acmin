@@ -16,9 +16,6 @@ class AdminFormView(SuccessMessageMixin, StaticFilterMixin, ContextMixin, Access
         else:
             return self.handle_no_permission()
 
-    def get_template_names(self):
-        return [f"admin/{self.model.__name__}/form.html", 'base/form.html']
-
     def get_removed_fields(self):
         return []
 

@@ -6,7 +6,7 @@
         <thead>
         {% block thead %}
             <tr>
-                {% if model.permission.operable %}
+                {% if model.class_permission.operable %}
                     <th>操作</th>
                 {% endif %}
                 {% for field in list_fields %}
@@ -19,20 +19,20 @@
         <tbody>
         {% block tbody %}
             {% if list %}
-                {% for m in list %}
+                {% for instance in list %}
                     <tr>
-                        {% if model.permission.operable %}
+                        {% if model.class_permission.operable %}
                             <td>
                                 {% block actions %}
                                     <div class="btn-group">
-                                        {% if m.permission.viewable%}
-                                            <a href="#!name=/{{ model_name }}/{{ m.id }}/">查看</a>
+                                        {% if instance.instance_permission.viewable %}
+                                            <a href="#!name=/{{ model_name }}/{{ instance.id }}/">查看</a>
                                         {% endif %}
-                                        {% if m.permission.removable %}
-                                            <a href="#!action=delete&name=/{{ model_name }}/{{ m.id }}">删除</a>
+                                        {% if instance.instance_permission.removable %}
+                                            <a href="#!action=delete&name=/{{ model_name }}/{{ instance.id }}">删除</a>
                                         {% endif %}
-                                        {% if m.permission.cloneable %}
-                                            <a href="#!name=/{{ model_name }}/{{ m.id }}?clone">复制</a>
+                                        {% if instance.instance_permission.cloneable %}
+                                            <a href="#!name=/{{ model_name }}/{{ instance.id }}?clone">复制</a>
                                         {% endif %}
                                         {% block extra-actions %}{% endblock %}
                                     </div>
@@ -40,16 +40,16 @@
                             </td>
                         {% endif %}
                         {% for field in list_fields %}
-                            <td style="color:{{ m.color }}">
+                            <td style="color:{{ instance.css_color }}">
                                 {% block field-td %}
                                     {% if field.class_name and viewable %}
                                         {% with id=field.attribute_name|add:".id" %}
-                                            <a href="#!name=/{{ field.class_name }}/{{ m|attr:id }}/">
-                                                {{ m|display:field.attribute_name|truncate }}
+                                            <a href="#!name=/{{ field.class_name }}/{{ instance|attr:id }}/">
+                                                {{ instance|display:field.attribute_name|truncate }}
                                             </a>
                                         {% endwith %}
                                     {% else %}
-                                        {{ m|display:field.attribute_name|truncate }}
+                                        {{ instance|display:field.attribute_name|truncate }}
                                     {% endif %}
                                 {% endblock %}
                             </td>

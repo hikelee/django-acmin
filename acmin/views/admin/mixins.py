@@ -1,3 +1,4 @@
+from acmin.models import Permission
 from acmin.utils import attr
 
 
@@ -55,47 +56,13 @@ class ContextMixin(object):
     def user(self):
         return attr(self, "request.user")
 
-    def is_creatable(self) -> bool:
-        return True
-
-    def is_cloneable(self) -> bool:
-        return True
-
-    def is_exportable(self) -> bool:
-        return True
-
-    def is_editable(self) -> bool:
-        return True
-
-    def is_removable(self) -> bool:
-        return True
-
-    def is_viewable(self) -> bool:
-        return True
-
-    def is_operable(self) -> bool:
-        return True
-
-    def is_selectable(self) -> bool:
-        return True
-
-    def is_show_index(self) -> bool:
-        return False
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs) or {}
+        model = self.model
+        model.class_permission = Permission.get_permission(self.user, model)
         context.update({
             'model': self.model,
             'model_name': self.model.__name__,
             'model_verbose_name': attr(self, 'model._meta.verbose_name'),
-            'creatable': self.is_creatable(),
-            'cloneable': self.is_cloneable(),
-            'editable': self.is_editable(),
-            'viewable': self.is_viewable(),
-            'removable': self.is_removable(),
-            'operable': self.is_operable(),
-            'exportable': self.is_exportable(),
-            "selectable": self.is_selectable(),
-            "show_index": self.is_show_index(),
         })
         return context

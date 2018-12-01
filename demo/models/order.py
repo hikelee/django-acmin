@@ -1,15 +1,14 @@
 from django.db import models
 
+from acmin.models import User
 from .address import Address
 from .base import BaseModel
 from .book import Book
-from acmin.models import User
 from .member import Member
+
 
 class Order(BaseModel):
     search_fields = ['name']
-    editable = False
-    viewable = True
 
     class Meta:
         ordering = ['-id']
@@ -21,6 +20,7 @@ class Order(BaseModel):
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     amount = models.FloatField("数量")
 
-
     def __str__(self):
         return str(self.id)
+
+

@@ -44,6 +44,18 @@ def _get_permissions():
     return _all_permissions
 
 
+class ModelPermission:
+    def __init__(self, **kwargs):
+        self.removable = kwargs.get("removable")
+        self.cloneable = kwargs.get("cloneable")
+        self.viewable = kwargs.get("viewable")
+        self.savable = kwargs.get("savable")
+
+    @property
+    def operable(self):
+        return self.viewable or self.removable or self.cloneable
+
+
 class PermissionItem:
     creatable = "creatable"
     savable = "savable"
@@ -76,6 +88,14 @@ class Permission(AcminModel):
         super().save(*args, **kwargs)
         with lock:
             _all_permissions.clear()
+
+    def to_instance_permission(self):
+        return ModelPermission(
+            removable=self.removable,
+            cloneable=self.cloneable,
+            viewable=self.viewable,
+            savable=self.savable
+        )
 
     def __str__(self):
         return self.name

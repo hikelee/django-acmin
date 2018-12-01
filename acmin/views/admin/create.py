@@ -8,6 +8,9 @@ from .form import AdminFormView
 class AdminCreateView(AdminFormView, CreateView):
     success_message = "创建成功!"
 
+    def get_template_names(self):
+        return [f"admin/{self.model.__name__}/create.html", 'base/create.html']
+
     def has_permission(self):
         return Permission.has_permission(self.request.user, self.model, PermissionItem.creatable)
 
@@ -15,8 +18,5 @@ class AdminCreateView(AdminFormView, CreateView):
         context = super().get_context_data(**kwargs)
         context["form_action"] = reverse(f'{self.model.__name__}-create')
         context["view_type"] = 'create'
-        obj = self.model
-        setattr(obj, "_request", self.request)
-        context["object"] = obj
 
         return context

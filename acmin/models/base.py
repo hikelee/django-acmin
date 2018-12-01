@@ -5,23 +5,6 @@ from django.urls import reverse
 from acmin.utils import attr
 
 
-class AcminModelPermission:
-    savable = True
-    removable = True
-    cloneable = True
-    viewable = True
-
-    def __init__(self, **kwargs):
-        self.savable = kwargs.get("editable", True)
-        self.removable = kwargs.get("removable", True)
-        self.cloneable = kwargs.get("cloneable", True)
-        self.viewable = kwargs.get("viewable", True)
-
-    @property
-    def operable(self):
-        return self.viewable or self.removable or self.cloneable
-
-
 def merge(name, attrs, meta_name, base_meta):
     meta = attrs.pop(meta_name, None)
     if not meta:
@@ -39,23 +22,16 @@ class BaseMeta(ModelBase):
     def __new__(mcs, name, bases, attrs, **kwargs):
         if name != 'AcminModel':
             attrs["Meta"] = merge(name, attrs, "Meta", getattr(AcminModel, "Meta"))
-            attrs["_permission"] = merge(name, attrs, "Permission", AcminModelPermission)
         return ModelBase.__new__(mcs, name, bases, attrs, **kwargs)
 
 
 class AcminModel(models.Model, metaclass=BaseMeta):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        clazz = attr(self.__class__, "_permission")
-        self._permission = clazz(**{key: value for key, value in vars(clazz).items() if not key.startswith("_")})
 
     class Meta:
         ordering = ['-id']
         abstract = True
-
-    @property
-    def permission(self) -> AcminModelPermission:
-        return self._permission
 
     def get_absolute_url(self):
         return reverse(self.__class__.__name__ + "-update", kwargs={"pk": self.pk})
@@ -63,3 +39,12 @@ class AcminModel(models.Model, metaclass=BaseMeta):
     @property
     def css_color(self):
         return "black"
+
+    @property
+    def instance_permission(self):
+        from .permission import Permission
+        request = attr(self, "_request")
+        if request:
+            return Permission.get_permission(request.user, self.__class__).to_instance_permission()
+        else:
+            return Permission()

@@ -2,9 +2,9 @@ import datetime
 
 from django.db import models
 
+from acmin.models import User
 from .base import BaseModel
 from .platform import Platform
-from acmin.models import User
 
 
 class OrderStatus:
@@ -33,7 +33,7 @@ class ClickFarming(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="所有者")
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, verbose_name="电商平台")
     order_number = models.CharField("订单号", max_length=50)
-    exprense = models.FloatField("刷单费用")
+    expense = models.FloatField("刷单费用")
     express_fee = models.FloatField("快递费", default=0)
     tracking_number = models.CharField("快递单号", max_length=30, blank=True, null=True)
     reimbursed = models.BooleanField("已报销?", default=False)
@@ -49,11 +49,11 @@ class ClickFarming(BaseModel):
         return self.order_number
 
     @property
-    def permission(self):
-        permission = super().permission
-        permission.removable = permission.editable = permission.cloneable = not self.reimbursed
+    def instance_permission(self):
+        result = super().instance_permission
+        if self.reimbursed:
+            result.removable = result.cloneable = False
+        return result
 
-        return permission
-
-    def color(self):
+    def css_color(self):
         return "black" if self.reimbursed else "red"
