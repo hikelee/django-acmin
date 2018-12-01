@@ -1,9 +1,32 @@
-from django.db import models
+from collections import defaultdict
 
+import django.apps
+from django.db import models
+from filelock import FileLock
+
+from acmin.utils import attr
 from .base import AcminModel
 from .group import Group
 from .model import Model
 from .user import User
+
+lock = FileLock("permission.lock")
+lock.release(force=True)
+
+_all_filters = defaultdict(lambda: defaultdict(list))
+
+
+def get_all_filters():
+    if not _all_filters:
+        with lock:
+            app_models = {model.__name__: model for model in django.apps.apps.get_models()}
+            all_models = {model: app_models.get(model.name) for model in Model.objects.all()}
+            for f in UserFilter.objects.all():
+                _all_filters[f.user][all_models[f.model]].append(f)
+            for f in GroupFilter.objects.all():
+                for user in User.objects.filter(group=f.group).all():
+                    _all_filters[user][all_models[f.model]].append(f)
+    return _all_filters
 
 
 class FilterValueType:
@@ -16,7 +39,7 @@ class FilterValueType:
     ]
 
 
-class BaseFilter(AcminModel):
+class Filter(AcminModel):
     class Meta:
         abstract = True
 
@@ -27,15 +50,35 @@ class BaseFilter(AcminModel):
     value = models.CharField("属性值", max_length=500)
     enabled = models.BooleanField("开通", default=True)
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        with lock:
+            _all_filters.clear()
 
-class GroupFilter(BaseFilter):
+    @classmethod
+    def get_filters(cls, user, model):
+        return get_all_filters()[user][model]
+
+    @classmethod
+    def get_filters_dict(cls, view, user, model):
+        result = {}
+        for f in Filter.get_filters(user, model):
+            value = f.value
+            if f.value_type == FilterValueType.view_attribute:
+                value = attr(view, value)
+            if value is not None:
+                result[f.attribute] = value
+        return result
+
+
+class GroupFilter(Filter):
     class Meta:
         verbose_name_plural = verbose_name = "组过滤器"
 
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
 
 
-class UserFilter(BaseFilter):
+class UserFilter(Filter):
     class Meta:
         verbose_name_plural = verbose_name = "用户过滤器"
 

@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.views import generic
 from django.views.generic.list import BaseListView
 
-from acmin.models import Permission, PermissionItem, GroupFilter, FilterValueType, UserFilter
+from acmin.models import Permission, PermissionItem, Filter
 from acmin.utils import (
     attr, first, get_ancestor_attribute, get_ancestors, get_ancestors_names, get_model_field_names
 )
@@ -258,19 +258,12 @@ class AdminListView(
 
     def get_queryset(self):
         query = super().get_queryset()
-        filters = {}
-        user_filters = list(UserFilter.objects.filter(user=self.request.user, model__name=self.model.__name__))
-        group_filters = list(GroupFilter.objects.filter(group__user=self.request.user, model__name=self.model.__name__))
-        for f in user_filters + group_filters:
-            value = f.value
-            if f.value_type == FilterValueType.view_attribute:
-                value = attr(self, value)
-            if value is not None:
-                filters[f.attribute] = value
-        try:
-            query = query.filter(**filters)
-        except:
-            traceback.print_exc()
+        filters = Filter.get_filters_dict(self, self.request.user, self.model)
+        if filters:
+            try:
+                query = query.filter(**filters)
+            except:
+                traceback.print_exc()
         return query
 
     def has_permission(self):

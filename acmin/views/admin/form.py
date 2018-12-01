@@ -3,7 +3,7 @@ from collections import OrderedDict
 from django.contrib.messages.views import SuccessMessageMixin
 from django.forms import ChoiceField
 
-from acmin.models import Permission, PermissionItem
+from acmin.models import Permission, PermissionItem, Filter
 from acmin.utils import attr, get_ancestor_attribute, get_ancestors, get_ancestors_names
 from .mixins import StaticFilterMixin, ContextMixin, AccessMixin
 
@@ -60,12 +60,10 @@ class AdminFormView(SuccessMessageMixin, StaticFilterMixin, ContextMixin, Access
         removed_fields = self.get_removed_fields()
         for index, (attribute, cls) in enumerate(chains):
             if attribute not in removed_fields:
-                # print(attribute)
                 queryset = cls.objects
-                filters = self.get_static_filter()
-                f = {k: v for c, f in filters if c is cls for k, v in f.items()}
-                if f:
-                    queryset = queryset.filter(**f)
+                filters = Filter.get_filters_dict(self, self.request.user, cls)
+                if filters:
+                    queryset = queryset.filter(**filters)
 
                 obj = attr(obj, attribute)
                 if obj and index < length - 1:
