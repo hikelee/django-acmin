@@ -13,7 +13,6 @@ class Province(BaseModel):
     name = models.CharField("名称", max_length=50)
 
     def __str__(self):
-        print(self.id)
         return self.name
 
     @property
