@@ -56,19 +56,23 @@ class Filter(AcminModel):
             _all_filters.clear()
 
     @classmethod
-    def get_filters(cls, user, model):
-        return get_all_filters()[user][model]
-
-    @classmethod
     def get_filters_dict(cls, view, user, model):
         result = {}
-        for f in Filter.get_filters(user, model):
+        for f in get_all_filters()[user][model]:
             value = f.value
             if f.value_type == FilterValueType.view_attribute:
                 value = attr(view, value)
             if value is not None:
                 result[f.attribute] = value
         return result
+
+    @classmethod
+    def filter(cls, query, view, model):
+        if query:
+            filters = cls.get_filters_dict(view, view.request.user, model)
+            if filters:
+                query = query.filter(**filters)
+        return query
 
 
 class GroupFilter(Filter):

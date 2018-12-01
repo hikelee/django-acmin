@@ -43,12 +43,6 @@ class AccessMixin:
         return True
 
 
-class StaticFilterMixin:
-    def get_max_cls(self):
-        return None
-
-    def get_static_filter(self):
-        return []
 
 
 class ContextMixin(object):

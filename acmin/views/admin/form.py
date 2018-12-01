@@ -5,10 +5,10 @@ from django.forms import ChoiceField
 
 from acmin.models import Permission, PermissionItem, Filter
 from acmin.utils import attr, get_ancestor_attribute, get_ancestors, get_ancestors_names
-from .mixins import StaticFilterMixin, ContextMixin, AccessMixin
+from .mixins import  ContextMixin, AccessMixin
 
 
-class AdminFormView(SuccessMessageMixin, StaticFilterMixin, ContextMixin, AccessMixin):
+class AdminFormView(SuccessMessageMixin,  ContextMixin, AccessMixin):
 
     def post(self, request, *args, **kwargs):
         if Permission.has_permission(self.request.user, self.model, PermissionItem.savable):
@@ -30,16 +30,15 @@ class AdminFormView(SuccessMessageMixin, StaticFilterMixin, ContextMixin, Access
 
     def get_ancestor_attribute_variables(self):
         cls = self.model
-        ancestors = list(reversed(get_ancestors(cls, self.get_max_cls())))
+        ancestors = list(reversed(get_ancestors(cls)))
         length = len(ancestors)
-        filters = self.get_static_filter()
 
         def to_dict(chain):
             name, cls = chain
             return dict(
                 name=name,
                 class_name=cls.__name__,
-                filters={k: v for (c, d) in filters if c is cls for k, v in d.items()}
+                filters=Filter.get_filters_dict(self, self.request.user, cls)
             )
 
         result = [dict(
@@ -53,10 +52,10 @@ class AdminFormView(SuccessMessageMixin, StaticFilterMixin, ContextMixin, Access
         obj = attr(context, "object")
         form = context["form"]
         choices = []
-        max_cls = self.get_max_cls()
-        chain_names = get_ancestors_names(self.model, max_cls)
+
+        chain_names = get_ancestors_names(self.model)
         length = len(chain_names)
-        chains = get_ancestors(self.model, max_cls)
+        chains = get_ancestors(self.model)
         removed_fields = self.get_removed_fields()
         for index, (attribute, cls) in enumerate(chains):
             if attribute not in removed_fields:
@@ -79,11 +78,14 @@ class AdminFormView(SuccessMessageMixin, StaticFilterMixin, ContextMixin, Access
                             f = {relation.replace(".", "__") + "__" + key: value for key, value in f.items()}
                             queryset = queryset.filter(**f)
 
+                options = [(e.id, str(e)) for e in queryset.all()]
+                if len(options) > 1:
+                    options = [('', '-----')] + options
                 choices.append((attribute, ChoiceField(
                     required=True if form.fields.pop(attribute, False) else False,
                     initial=attr(obj, "id"),
                     label=attr(cls, '_meta.verbose_name'),
-                    choices=[('', '-----')] + [(e.id, str(e)) for e in queryset.all()]
+                    choices=options
                 )))
         choices.reverse()
 

@@ -1,5 +1,4 @@
 import operator
-import traceback
 from collections import OrderedDict
 from functools import reduce
 
@@ -12,10 +11,10 @@ from django.views.generic.list import BaseListView
 
 from acmin.models import Permission, PermissionItem, Filter
 from acmin.utils import (
-    attr, first, get_ancestor_attribute, get_ancestors, get_ancestors_names, get_model_field_names
+    attr, get_ancestor_attribute, get_ancestors_names, get_model_field_names
 )
 from acmin.utils import models as model_util
-from .mixins import StaticFilterMixin, ContextMixin, AccessMixin
+from .mixins import ContextMixin, AccessMixin
 
 
 class SearchMixin(BaseListView):
@@ -49,11 +48,11 @@ class FilterForm(forms.Form):
     pass
 
 
-class ToolbarSearchFormMixin(SearchMixin, StaticFilterMixin):
+class ToolbarSearchFormMixin(SearchMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["toolbar_search_form"] = self.get_toolbar_search_form()
-        names = [x for x in get_ancestors_names(self.model, self.get_max_cls())]
+        names = [x for x in get_ancestors_names(self.model)]
         context['hierarchy'] = {e: names[0:index] for index, e in enumerate(names)}
         return context
 
@@ -70,17 +69,6 @@ class ToolbarSearchFormMixin(SearchMixin, StaticFilterMixin):
     def get_toolbar_extra_search_choices(self):
         return []
 
-    def _get_queryset_from_static_filters(self, cls):
-        queryset = cls.objects
-        filters = self.get_static_filter()
-        if filters:
-            for ancestor_cls, ancestor_filters in filters:
-                attribute = get_ancestor_attribute(cls, ancestor_cls)
-                if attribute:
-                    f = {attribute.replace(".", "__") + "_" + key: value for key, value in ancestor_filters.items()}
-                    queryset = cls.objects.filter(**f)
-        return queryset
-
     def get_toolbar_search_fields(self):
         choices = []
 
@@ -93,7 +81,6 @@ class ToolbarSearchFormMixin(SearchMixin, StaticFilterMixin):
             for relation in relations:
                 name = relation.attribute
                 cls = relation.model
-                # print(name,cls)
                 queryset = None
                 if last_name:
                     value = params.get(last_name, None)
@@ -101,24 +88,16 @@ class ToolbarSearchFormMixin(SearchMixin, StaticFilterMixin):
                         attribute = get_ancestor_attribute(cls, last_cls)
                         queryset = cls.objects.filter(**{attribute.replace(".", "__") + "_id": value})
                 else:
-                    queryset = self._get_queryset_from_static_filters(cls)
+                    queryset = Filter.filter(cls.objects, self, cls)
 
-                if queryset:
-                    static_filter = {}
-                    for (c, f) in self.get_static_filter():
-                        if c is cls:
-                            static_filter.update(f)
-                    if static_filter:
-                        queryset = queryset.filter(**static_filter)
+                queryset = Filter.filter(queryset, self, cls)
 
                 options = [(e.id, str(e)) for e in queryset.all()] if queryset else []
+                label = attr(cls, '_meta.verbose_name')
+                if len(options) > 1:
+                    options = [('', '选择%s' % label)] + options
                 if options:
-                    label = attr(cls, '_meta.verbose_name')
-                    choices.append((name, ChoiceField(
-                        initial=params.get(name, ""),
-                        label=label,
-                        choices=[('', '选择%s' % label)] + options,
-                    )))
+                    choices.append((name, ChoiceField(initial=params.get(name, ""), label=label, choices=options, )))
                     last_cls, last_name = cls, name
 
         return choices
@@ -165,27 +144,8 @@ class JsonResponseMixin(BaseListView):
         return super().get(request, args, kwargs)
 
 
-class AdminStaticListFilterMixin(StaticFilterMixin):
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        chains = get_ancestors(self.model)
-        for cls, filters in self.get_static_filter():
-            if self.model is cls:
-                queryset = queryset.filter(**filters)
-            else:
-                index = first([index for index, (_, c) in enumerate(chains) if c is cls])
-                if index is not None:
-                    attribute = ".".join([name for name, _ in chains[0:index + 1]])
-                    new_filters = {attribute.replace(".", "__") + "__" + k: v for k, v in filters.items()}
-                    # print(new_filters)
-                    queryset = queryset.filter(**new_filters)
-
-        return queryset
-
-
 class AdminListView(
     JsonResponseMixin,
-    AdminStaticListFilterMixin,
     FuzzySearchMixin,
     ToolbarSearchFormMixin,
     ToolbarSearchMixin,
@@ -257,14 +217,7 @@ class AdminListView(
         return context
 
     def get_queryset(self):
-        query = super().get_queryset()
-        filters = Filter.get_filters_dict(self, self.request.user, self.model)
-        if filters:
-            try:
-                query = query.filter(**filters)
-            except:
-                traceback.print_exc()
-        return query
+        return Filter.filter(super().get_queryset(), self, self.model)
 
     def has_permission(self):
         return Permission.has_permission(self.request.user, self.model, PermissionItem.listable)
