@@ -82,7 +82,6 @@ class Permission(AcminModel):
     exportable = models.BooleanField("可导出", default=False)
     viewable = models.BooleanField("可查看", default=False)
     listable = models.BooleanField("可列表", default=False)
-    enabled = models.BooleanField("开通", default=False, db_index=True)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

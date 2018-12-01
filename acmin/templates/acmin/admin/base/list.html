@@ -7,10 +7,10 @@
         <li><a href="#!name=/{{ model_name }}">{{ model_verbose_name }}</a></li>
         <li class="active">列表</li>
     </ul>
-    {% if model.permission.creatable %}
+    {% if model.class_permission.creatable %}
         <a class="ace-icon fa fa-plus" href="#!name=/{{ model_name }}/create"> 新建</a>&nbsp;&nbsp;
     {% endif %}
-    {% if model.permission.exportable %}
+    {% if model.class_permission.exportable %}
         <a class="ace-icon fa fa-download" href="javascript:exportExcel();">导出</a>
     {% endif %}
 {% endblock %}
