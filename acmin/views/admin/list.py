@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.views import generic
 from django.views.generic.list import BaseListView
 
-from acmin.models import BasePermission, PermissionItem, GroupFilter, FilterValueType, UserFilter
+from acmin.models import Permission, PermissionItem, GroupFilter, FilterValueType, UserFilter
 from acmin.utils import (
     attr, first, get_ancestor_attribute, get_ancestors, get_ancestors_names, get_model_field_names
 )
@@ -274,4 +274,4 @@ class AdminListView(
         return query
 
     def has_permission(self):
-        return BasePermission.has_permission(self.request.user, self.model, PermissionItem.listable)
+        return Permission.has_permission(self.request.user, self.model, PermissionItem.listable)

@@ -1,7 +1,7 @@
 from django.urls import reverse
 from django.views.generic.edit import UpdateView
 
-from acmin.models import BasePermission, PermissionItem
+from acmin.models import Permission, PermissionItem
 from .form import AdminFormView
 
 
@@ -9,7 +9,7 @@ class AdminUpdateView(AdminFormView, UpdateView):
     success_message = "更新成功!"
 
     def has_permission(self):
-        return BasePermission.has_permission(self.request.user, self.model, PermissionItem.viewable)
+        return Permission.has_permission(self.request.user, self.model, PermissionItem.viewable)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

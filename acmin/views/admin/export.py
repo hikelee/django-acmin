@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.utils.http import urlquote
 from django.utils.six import BytesIO
 
-from acmin.models import BasePermission, PermissionItem
+from acmin.models import Permission, PermissionItem
 from acmin.utils import attr, display, decorators, get_model_fields, Field
 from .list import AdminListView
 
@@ -28,7 +28,7 @@ class AdminExportView(AdminListView):
     paginate_by = None
 
     def has_permission(self):
-        return BasePermission.has_permission(self.request.user, self.model, PermissionItem.exportable)
+        return Permission.has_permission(self.request.user, self.model, PermissionItem.exportable)
 
     def get_fields(self):
         return get_export_fields(self.model)
