@@ -32,7 +32,10 @@ class BasePermission(AcminModel):
     exportable = models.BooleanField("可导出", default=True)
     viewable = models.BooleanField("可查看", default=True)
     listable = models.BooleanField("可列表", default=True)
-    enabled = models.BooleanField("开通", default=True)
+    enabled = models.BooleanField("开通", default=True, db_index=True)
+
+    def __str__(self):
+        return self.name
 
     @property
     def operable(self):
@@ -59,6 +62,7 @@ class BasePermission(AcminModel):
 class GroupPermission(BasePermission):
     class Meta:
         verbose_name_plural = verbose_name = "用户组权限"
+        unique_together = (('group', 'model'),)
 
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
 
@@ -66,6 +70,7 @@ class GroupPermission(BasePermission):
 class UserPermission(BasePermission):
     class Meta:
         verbose_name_plural = verbose_name = "用户权限"
+        unique_together = (('user', 'model'),)
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -76,4 +81,4 @@ class SuperPermissionModel(AcminModel):
     """
 
     class Meta:
-        verbose_name_plural = verbose_name = "所用模型"
+        verbose_name_plural = verbose_name = "超級模型"

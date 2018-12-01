@@ -5,20 +5,16 @@ from django.urls import reverse
 from acmin.utils import attr
 
 
-class BasePermission:
-    creatable = True
-    editable = True
+class AcminModelPermission:
+    savable = True
     removable = True
     cloneable = True
-    exportable = True
     viewable = True
 
     def __init__(self, **kwargs):
-        self.creatable = kwargs.get("creatable", True)
-        self.editable = kwargs.get("editable", True)
+        self.savable = kwargs.get("editable", True)
         self.removable = kwargs.get("removable", True)
         self.cloneable = kwargs.get("cloneable", True)
-        self.exportable = kwargs.get("exportable", True)
         self.viewable = kwargs.get("viewable", True)
 
     @property
@@ -43,7 +39,7 @@ class BaseMeta(ModelBase):
     def __new__(mcs, name, bases, attrs, **kwargs):
         if name != 'AcminModel':
             attrs["Meta"] = merge(name, attrs, "Meta", getattr(AcminModel, "Meta"))
-            attrs["_permission"] = merge(name, attrs, "Permission", BasePermission)
+            attrs["_permission"] = merge(name, attrs, "Permission", AcminModelPermission)
         return ModelBase.__new__(mcs, name, bases, attrs, **kwargs)
 
 
@@ -58,12 +54,12 @@ class AcminModel(models.Model, metaclass=BaseMeta):
         abstract = True
 
     @property
-    def permission(self) -> BasePermission:
+    def permission(self) -> AcminModelPermission:
         return self._permission
 
     def get_absolute_url(self):
         return reverse(self.__class__.__name__ + "-update", kwargs={"pk": self.pk})
 
     @property
-    def color(self):
+    def css_color(self):
         return "black"

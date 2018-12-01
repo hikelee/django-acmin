@@ -25,7 +25,7 @@
                             <td>
                                 {% block actions %}
                                     <div class="btn-group">
-                                        {% if m.permission.viewable or m.permission.editable %}
+                                        {% if m.permission.viewable%}
                                             <a href="#!name=/{{ model_name }}/{{ m.id }}/">查看</a>
                                         {% endif %}
                                         {% if m.permission.removable %}
