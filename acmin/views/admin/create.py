@@ -9,7 +9,7 @@ class AdminCreateView(AdminFormView, CreateView):
     success_message = "创建成功!"
 
     def get_template_names(self):
-        return [f"admin/{self.model.__name__}/create.html", 'base/create.html']
+        return [f"admin/{self.model.__name__}/create.html", 'acmin/admin/base/create.html']
 
     def has_permission(self):
         return Permission.has_permission(self.request.user, self.model, PermissionItem.creatable)

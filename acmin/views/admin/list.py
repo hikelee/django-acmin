@@ -246,7 +246,7 @@ class AdminListView(
         return self.get_relation_fields() + self.get_model_list_fields()
 
     def get_template_names(self):
-        return [f'admin/{self.model.__name__}/list.html', 'base/list.html']
+        return [f'admin/{self.model.__name__}/list.html', 'acmin/admin/base/list.html']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

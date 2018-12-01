@@ -13,7 +13,7 @@ class AdminUpdateView(AdminFormView, UpdateView):
 
     def get_template_names(self):
         name = "create.html" if self.is_clone() else "update.html"
-        return [f"admin/{self.model.__name__}/{name}", f'base/{name}']
+        return [f"admin/{self.model.__name__}/{name}", f'acmin/admin/base/{name}']
 
     def has_permission(self):
         return Permission.has_permission(self.request.user, self.model, PermissionItem.viewable)

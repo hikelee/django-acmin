@@ -5,7 +5,7 @@
             {% endblock %}
             {% block search %}
                 {% ifequal  view_type 'list' %}
-                    {% include "base/search.html" %}
+                    {% include "acmin/admin/base/search.html" %}
                 {% endifequal %}
             {% endblock %}
         </div>
@@ -16,7 +16,7 @@
         <div class="page-content">
             <div class="row">
                 <div class="col-xs-12">
-                    {% include "base/messages.html" %}
+                    {% include "acmin/admin/base/messages.html" %}
                     {% block content %}
                     {% endblock %}
                 </div>

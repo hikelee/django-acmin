@@ -1,4 +1,4 @@
-{% extends 'base/template.html' %}
+{% extends 'acmin/admin/base/template.html' %}
 {% load attr %}
 {% load truncate %}
 {% load display %}
@@ -27,11 +27,11 @@
     <div class="row">
         {% block pre-row %}{% endblock %}
         <div class="col-xs-12">
-            {% include "base/filters.html" %}
+            {% include "acmin/admin/base/filters.html" %}
             <div class="table-responsive">
-                {% include "base/paginator.html" %}
-                {% include "base/table.html" %}
-                {% include "base/paginator.html" %}
+                {% include "acmin/admin/base/paginator.html" %}
+                {% include "acmin/admin/base/table.html" %}
+                {% include "acmin/admin/base/paginator.html" %}
             </div>
         </div>
         {% block post-row %}{% endblock %}

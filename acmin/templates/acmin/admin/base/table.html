@@ -10,7 +10,7 @@
                     <th>操作</th>
                 {% endif %}
                 {% for field in list_fields %}
-                    <th>{{ field.verbose }}{% include "base/sort.html" %}</th>
+                    <th>{{ field.verbose }}{% include "acmin/admin/base/sort.html" %}</th>
                 {% endfor %}
                 {% block post_th %} {% endblock %}
             </tr>

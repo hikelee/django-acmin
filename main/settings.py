@@ -45,7 +45,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # 'DIRS': [BASE_DIR.child('templates')],
+        # 'DIRS': [BASE_DIR.child('admin')],
         'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {

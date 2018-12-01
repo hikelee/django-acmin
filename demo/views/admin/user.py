@@ -49,7 +49,7 @@ class UserUpdateView(FormMixin, BaseUpdateView):
 
 class LoginView(FormView):
     form_class = LoginForm
-    template_name = 'user/login.html'
+    template_name = 'acmin/admin/user/login.html'
     success_url = '/'
     redirect_field_name = REDIRECT_FIELD_NAME
 
