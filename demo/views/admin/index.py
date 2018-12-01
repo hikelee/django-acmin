@@ -17,25 +17,25 @@ nodes = [
 ]
 
 
-def get_excluded_models(user):
-    excludes = list(acmin_models.Model.objects.filter(
+def get_listable_models(user):
+    listable_models = list(acmin_models.Model.objects.filter(
         grouppermission__group__user=user,
         grouppermission__enabled=True,
-        grouppermission__listable=False
+        grouppermission__listable=True
     )) + list(acmin_models.Model.objects.filter(
         userpermission__user=user,
         grouppermission__enabled=True,
-        grouppermission__listable=False
+        grouppermission__listable=True
     ))
-    return set([model.name for model in excludes])
+    return set([model.name for model in listable_models])
 
 
 def get_nodes(user):
-    excludes = get_excluded_models(user)
+    listable_models = get_listable_models(user)
     result = []
     for name, models in nodes:
         sub = [(model.__name__, attr(model, "_meta.verbose_name")) for model in models if
-               model.__name__ not in excludes]
+               model.__name__ in listable_models or acmin_models.SuperPermissionModel.__name__ in listable_models]
         if sub:
             result.append((name, sub))
     return result

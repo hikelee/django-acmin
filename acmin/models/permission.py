@@ -38,3 +38,12 @@ class UserPermission(BasePermission):
         verbose_name_plural = verbose_name = "用户权限"
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+class SuperPermissionModel(AcminModel):
+    """
+    代表所有模型，一般用在admin用户组/用户下
+    """
+
+    class Meta:
+        verbose_name_plural = verbose_name = "所用模型"
