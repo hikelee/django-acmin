@@ -40,7 +40,8 @@ MIDDLEWARE = [
     'django.middleware.gzip.GZipMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    f'{APP_NAME}.middlewares.LogMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'acmin.middlewares.LogMiddleware',
 ]
 TEMPLATES = [
     {
