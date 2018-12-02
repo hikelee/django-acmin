@@ -70,17 +70,17 @@ class Result(object):
 
 
 def to_json(data, fields):
-    if 'QuerySet' in str(type(data)):  # data = obj_list 是个 QuerySet对象
-        result = [to_json(obj, fields) for obj in data]  # 递归调用直到不存在QuerySet对象为止
+    if 'QuerySet' in str(type(data)):
+        result = [to_json(obj, fields) for obj in data]
     else:
         result = {}
         for name in fields:
             field = name
             if "|" in name:
-                parts = name.split("|")  # 一、以 '|' 将字符串进行分割  得到一个列表，比如 'a|b'  ['a','b']
+                parts = name.split("|")
                 name = parts[1]
                 field = parts[0] + ".id"
-            result[name] = attrs.attr(data, field)  # 将name作为key
+            result[name] = attrs.attr(data, field)
     return result
 
 
