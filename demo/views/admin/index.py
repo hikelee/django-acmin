@@ -5,18 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.template import loader
 
-from acmin.models import *
-from acmin.utils import attr
-from demo.models import *
-
-nodes = [
-    ("基础信息",
-     [Group, User, KeyValue, ContentType, GroupFilter, UserFilter, GroupPermission, UserPermission]),
-    ("业务信息", [Platform, ClickFarming, Expenditure, Province, City, Area, Address, Member, Author, Book, Order]),
-]
+from acmin.models import ContentType, Permission, PermissionItem
+from acmin.utils import attr, import_model
 
 
 def get_nodes(user):
+    nodes = [
+        ("基础信息", [import_model("acmin", ct.name) for ct in ContentType.objects.filter(app="acmin")]),
+        ("业务信息", [import_model("demo", ct.name) for ct in ContentType.objects.filter(app="demo")]),
+    ]
     result = []
     for name, models in nodes:
         sub = [(model.__name__, attr(model, "_meta.verbose_name")) for model in models if

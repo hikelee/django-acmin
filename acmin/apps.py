@@ -1,3 +1,5 @@
+import sys
+
 from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 
@@ -8,8 +10,8 @@ class AcminConfig(AppConfig):
     name = 'acmin'
 
     def ready(self):
-        from acmin import sql
-        from acmin import cache
         post_migrate.connect(init_models)
-        sql.patch()
-        cache.patch()
+        if "runserver" in sys.argv:
+            from acmin import sql, cache
+            sql.patch()
+            cache.patch()

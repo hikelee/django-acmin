@@ -1,20 +1,25 @@
-from acmin.utils import attr
-
-
 def init_models(sender, **kwargs):
     import django.apps
     from acmin.models import ContentType, AcminModel
-    app_models = {m.__name__: attr(m, '_meta.verbose_name') for m in django.apps.apps.get_models() if issubclass(m, AcminModel)}
-    contenttypes = {m.name: m for m in ContentType.objects.all()}
-    for name, verbose_name in app_models.items():
-        contenttype = contenttypes.get(name)
+    contenttypes = {}
+    for contenttype in ContentType.objects.all():
+        contenttypes[contenttype.app + "-" + contenttype.name] = contenttype
+    models = {}
+    for model in [model for model in django.apps.apps.get_models() if issubclass(model, AcminModel)]:
+        app = model.__module__.split(".")[0]
+        name = model.__name__
+        models[app + "-" + name] = model._meta.verbose_name
+
+    for flag, verbose_name in models.items():
+        contenttype = contenttypes.get(flag)
         if contenttype:
             if contenttype.verbose_name != verbose_name:
                 contenttype.verbose_name = verbose_name
                 contenttype.save()
         else:
-            ContentType.objects.create(name=name, verbose_name=verbose_name)
+            app, name = flag.split("-")
+            ContentType.objects.create(app=app, name=name, verbose_name=verbose_name)
 
-    for name, contenttype in contenttypes.items():
-        if name not in app_models:
+    for flag, contenttype in contenttypes.items():
+        if flag not in models:
             contenttype.delete()
