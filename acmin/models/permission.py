@@ -1,6 +1,5 @@
 import collections
 
-import django.apps
 from django.db import models
 from filelock import FileLock
 
@@ -19,30 +18,31 @@ lock.release(force=True)
 def _get_permissions():
     if not _all_permissions:
         with lock:
-            app_models = {model.__name__: model for model in django.apps.apps.get_models()}
-            contenttype_dict = {contenttype: app_models.get(contenttype.name) for contenttype in ContentType.objects.all()}
-
+            contenttypes = ContentType.objects.all()
             for permission in GroupPermission.objects.all():
                 for user in User.objects.filter(group=permission.group):
-                    _all_permissions[user][contenttype_dict[permission.contenttype]] = permission
+                    _all_permissions[user][permission.contenttype.get_model()] = permission
             for permission in UserPermission.objects.all():
-                _all_permissions[permission.user][contenttype_dict[permission.contenttype]] = permission
+                _all_permissions[permission.user][permission.contenttype.get_model()] = permission
 
             for permission in GroupPermission.objects.filter(contenttype__name=SuperPermissionModel.__name__):
                 for user in User.objects.filter(group=permission.group):
-                    for contenttype, app_model in contenttype_dict.items():
-                        if app_model not in _all_permissions[user]:
-                            _all_permissions[user][app_model] = permission
+                    for contenttype in contenttypes:
+                        model = contenttype.get_model()
+                        if model not in _all_permissions[user]:
+                            _all_permissions[user][model] = permission
 
             for permission in UserPermission.objects.filter(contenttype__name=SuperPermissionModel.__name__):
-                for contenttype, app_model in contenttype_dict.items():
-                    if app_model not in _all_permissions[permission.user]:
-                        _all_permissions[permission.user][app_model] = permission
+                for contenttype in contenttypes:
+                    model = contenttype.get_model()
+                    if model not in _all_permissions[permission.user]:
+                        _all_permissions[permission.user][model] = permission
 
             for user in User.objects.all():
-                for contenttype, app_model in contenttype_dict.items():
-                    if app_model not in _all_permissions[user]:
-                        _all_permissions[user][app_model] = UserPermission(user=user, contenttype=contenttype)
+                for contenttype in contenttypes:
+                    model = contenttype.get_model()
+                    if model not in _all_permissions[user]:
+                        _all_permissions[user][model] = UserPermission(user=user, contenttype=contenttype)
 
     return _all_permissions
 

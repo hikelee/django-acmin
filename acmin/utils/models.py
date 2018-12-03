@@ -63,7 +63,6 @@ def get_relation_group(model):
                 relations = [relation]
             last_attribute = sub_attribute
 
-    print(relations)
     if relations:
         group.append(relations)
 

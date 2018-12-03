@@ -1,6 +1,5 @@
 from collections import defaultdict
 
-import django.apps
 from django.db import models
 from filelock import FileLock
 
@@ -10,7 +9,7 @@ from .contenttype import ContentType
 from .group import Group
 from .user import User
 
-lock = FileLock("permission.lock")
+lock = FileLock("filter.lock")
 lock.release(force=True)
 
 _all_filters = defaultdict(lambda: defaultdict(list))
@@ -19,13 +18,11 @@ _all_filters = defaultdict(lambda: defaultdict(list))
 def get_all_filters():
     if not _all_filters:
         with lock:
-            app_models = {model.__name__: model for model in django.apps.apps.get_models()}
-            contenttypes = {ct: app_models.get(ct.name) for ct in ContentType.objects.all()}
             for f in UserFilter.objects.all():
-                _all_filters[f.user][contenttypes[f.model]].append(f)
+                _all_filters[f.user][f.contenttype.get_model()].append(f)
             for f in GroupFilter.objects.all():
                 for user in User.objects.filter(group=f.group).all():
-                    _all_filters[user][contenttypes[f.model]].append(f)
+                    _all_filters[user][f.contenttype.get_model()].append(f)
     return _all_filters
 
 

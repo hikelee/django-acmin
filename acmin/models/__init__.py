@@ -1,4 +1,3 @@
-from .alias import Alias
 from .base import AcminModel
 from .contenttype import ContentType, GroupContentType, UserContentType
 from .field import Field, GroupField, UserField
