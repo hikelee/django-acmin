@@ -3,7 +3,7 @@ from django.db import models
 from .base import AcminModel
 
 
-class Model(AcminModel):
+class AcminContentType(AcminModel):
     class Meta:
         verbose_name_plural = verbose_name = "模型"
 

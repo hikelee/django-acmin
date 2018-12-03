@@ -7,7 +7,7 @@ from filelock import FileLock
 from acmin.utils import attr
 from .base import AcminModel
 from .group import Group
-from .model import Model
+from .contenttype import AcminContentType
 from .user import User
 
 _all_permissions = collections.defaultdict(dict)
@@ -20,7 +20,7 @@ def _get_permissions():
     if not _all_permissions:
         with lock:
             app_models = {model.__name__: model for model in django.apps.apps.get_models()}
-            all_models = {model: app_models.get(model.name) for model in Model.objects.all()}
+            all_models = {model: app_models.get(model.name) for model in AcminContentType.objects.all()}
 
             for user in User.objects.all():
                 for model, app_model in all_models.items():
@@ -73,7 +73,7 @@ class Permission(AcminModel):
     class Meta:
         abstract = True
 
-    model = models.ForeignKey(Model, on_delete=models.CASCADE)
+    model = models.ForeignKey(AcminContentType, on_delete=models.CASCADE)
     name = models.CharField("名称", max_length=100)
     creatable = models.BooleanField("可创建", default=False)
     savable = models.BooleanField("可保存", default=False)

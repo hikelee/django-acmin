@@ -7,7 +7,7 @@ from filelock import FileLock
 from acmin.utils import attr
 from .base import AcminModel
 from .group import Group
-from .model import Model
+from .contenttype import AcminContentType
 from .user import User
 
 lock = FileLock("permission.lock")
@@ -20,7 +20,7 @@ def get_all_filters():
     if not _all_filters:
         with lock:
             app_models = {model.__name__: model for model in django.apps.apps.get_models()}
-            all_models = {model: app_models.get(model.name) for model in Model.objects.all()}
+            all_models = {model: app_models.get(model.name) for model in AcminContentType.objects.all()}
             for f in UserFilter.objects.all():
                 _all_filters[f.user][all_models[f.model]].append(f)
             for f in GroupFilter.objects.all():
@@ -43,7 +43,7 @@ class Filter(AcminModel):
     class Meta:
         abstract = True
 
-    model = models.ForeignKey(Model, on_delete=models.CASCADE)
+    model = models.ForeignKey(AcminContentType, on_delete=models.CASCADE)
     name = models.CharField("过滤器名称", max_length=100)
     value_type = models.SmallIntegerField("值类型", choices=FilterValueType.choices)
     attribute = models.CharField("属性名", max_length=100)
