@@ -11,7 +11,7 @@ from demo.models import *
 
 nodes = [
     ("基础信息",
-     [Group, User, KeyValue, AcminContentType, GroupFilter, UserFilter, GroupPermission, UserPermission]),
+     [Group, User, KeyValue, ContentType, GroupFilter, UserFilter, GroupPermission, UserPermission]),
     ("业务信息", [Platform, ClickFarming, Expenditure, Province, City, Area, Address, Member, Author, Book, Order]),
 ]
 

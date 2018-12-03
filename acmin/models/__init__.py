@@ -2,6 +2,6 @@ from .base import AcminModel
 from .filter import UserFilter, GroupFilter, FilterValueType, Filter
 from .group import Group
 from .kv import KeyValue
-from .contenttype import AcminContentType
+from .contenttype import ContentType
 from .permission import GroupPermission, UserPermission, SuperPermissionModel, Permission, PermissionItem
 from .user import User

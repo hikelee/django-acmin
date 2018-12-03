@@ -6,8 +6,8 @@ from filelock import FileLock
 
 from acmin.utils import attr
 from .base import AcminModel
+from .contenttype import ContentType
 from .group import Group
-from .contenttype import AcminContentType
 from .user import User
 
 _all_permissions = collections.defaultdict(dict)
@@ -20,25 +20,25 @@ def _get_permissions():
     if not _all_permissions:
         with lock:
             app_models = {model.__name__: model for model in django.apps.apps.get_models()}
-            all_models = {model: app_models.get(model.name) for model in AcminContentType.objects.all()}
+            contenttype_dict = {contenttype: app_models.get(contenttype.name) for contenttype in ContentType.objects.all()}
 
             for user in User.objects.all():
-                for model, app_model in all_models.items():
-                    _all_permissions[user][app_model] = UserPermission(user=user, model=model)
+                for contenttype, app_model in contenttype_dict.items():
+                    _all_permissions[user][app_model] = UserPermission(user=user, contenttype=contenttype)
 
             for permission in GroupPermission.objects.all():
                 for user in User.objects.filter(group=permission.group):
-                    _all_permissions[user][all_models[permission.model]] = permission
+                    _all_permissions[user][contenttype_dict[permission.contenttype]] = permission
             for permission in UserPermission.objects.all():
-                _all_permissions[permission.user][all_models[permission.model]] = permission
+                _all_permissions[permission.user][contenttype_dict[permission.contenttype]] = permission
 
-            for permission in GroupPermission.objects.filter(model__name=SuperPermissionModel.__name__):
+            for permission in GroupPermission.objects.filter(contenttype__name=SuperPermissionModel.__name__):
                 for user in User.objects.filter(group=permission.group):
-                    for model, app_model in all_models.items():
+                    for contenttype, app_model in contenttype_dict.items():
                         _all_permissions[user][app_model] = permission
 
-            for permission in UserPermission.objects.filter(model__name=SuperPermissionModel.__name__):
-                for model, app_model in all_models.items():
+            for permission in UserPermission.objects.filter(contenttype__name=SuperPermissionModel.__name__):
+                for contenttype, app_model in contenttype_dict.items():
                     _all_permissions[permission.user][app_model] = permission
 
     return _all_permissions
@@ -73,7 +73,7 @@ class Permission(AcminModel):
     class Meta:
         abstract = True
 
-    model = models.ForeignKey(AcminContentType, on_delete=models.CASCADE)
+    contenttype = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     name = models.CharField("名称", max_length=100)
     creatable = models.BooleanField("可创建", default=False)
     savable = models.BooleanField("可保存", default=False)
@@ -116,7 +116,7 @@ class Permission(AcminModel):
 class GroupPermission(Permission):
     class Meta:
         verbose_name_plural = verbose_name = "用户组权限"
-        unique_together = (('group', 'model'),)
+        unique_together = (('group', 'contenttype'),)
 
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
 
@@ -124,7 +124,7 @@ class GroupPermission(Permission):
 class UserPermission(Permission):
     class Meta:
         verbose_name_plural = verbose_name = "用户权限"
-        unique_together = (('user', 'model'),)
+        unique_together = (('user', 'contenttype'),)
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
