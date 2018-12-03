@@ -1,7 +1,7 @@
 from .alias import Alias
 from .base import AcminModel
 from .contenttype import ContentType, GroupContentType, UserContentType
-from .field import Field, GroupFiled, UserFiled
+from .field import Field, GroupField, UserField
 from .filter import UserFilter, GroupFilter, FilterValueType, Filter
 from .group import Group
 from .kv import KeyValue

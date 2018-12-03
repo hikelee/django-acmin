@@ -1,87 +1,50 @@
 from django.db.models.fields.related import ForeignKey
-import collections
+
 from . import attr, auto_repr, first, memorize
 
 
-
-
-
-class Relation(object):
-    def __init__(self, model, attribute, verbose_name):
-        self.model = model
-        self.attribute = attribute
-        self.verbose_name = verbose_name
-
-    def __repr__(self):
-        return ""f"{self.model},{self.attribute},{self.verbose_name}"""
-
-
-class MultipleRelation(object):
-    def __init__(self, model, attributes, verbose_names):
-        self.model = model
-        self.attributes = attributes
-        self.verbose_names = verbose_names
-
-    def __repr__(self):
-        return f"{self.model},{self.attributes},{self.verbose_names}"
-
-
-def get_relation1(model):
-    relations = []
-    fields = attr(model, '_meta.fields')
-    for field in fields:
-        remote_field = attr(field, "remote_field")
-        if remote_field:
-            related_model = attr(remote_field, "model")
-            field = attr(remote_field, "field")
-            if type(field) is ForeignKey:
-                relations.append((related_model, attr(field, "name")))
-    return relations
-
-
-def _get_attributes(model, name=None):
-    relations = get_relation1(model)
-    names = []
-    for relation_model, relation_attribute in relations:
-        new_name = f"{name}.{relation_attribute}" if name else relation_attribute
-        new_names = _get_attributes(relation_model, new_name)
-        if new_names:
-            names += new_names
-        else:
-            names.append(new_name)
-
-    return names
-
-
-def get_multiple_relation_group(model):
-    class_relations = collections.defaultdict(list)
-    group = get_relation_group(model)
-    for relations in group:
-        for relation in relations:
-            class_relations[relation.model].append(relation)
-
-    result = []
-    for relations in group:
-        new_relations = []
-        for relation in relations:
-            all_relation = class_relations.pop(relation.model, None)
-            if all_relation:
-                attributes = [r.attribute for r in all_relation]
-                verbose_names = [r.verbose_name for r in all_relation]
-                new_relations.append(MultipleRelation(
-                    relation.model, attributes, verbose_names))
-        if new_relations:
-            result.append(new_relations)
-    
-
-
-    return result
-
 @memorize
 def get_relation_group(model):
+    class Relation(object):
+        def __init__(self, model, attribute, verbose_name):
+            self.model = model
+            self.attribute = attribute
+            self.verbose_name = verbose_name
+
+        def __repr__(self):
+            return f"({self.model},{self.attribute},{self.verbose_name})"
+
+    def get_relation1(cls):
+        relations = []
+        fields = attr(cls, '_meta.fields')
+        for field in fields:
+            remote_field = attr(field, "remote_field")
+            if remote_field:
+                related_model = attr(remote_field, "model")
+                field = attr(remote_field, "field")
+                if type(field) is ForeignKey:
+                    relations.append((related_model, attr(field, "name")))
+        return relations
+
+    def _get_attributes(cls, name=None):
+        relations = get_relation1(cls)
+        names = []
+        for relation_model, relation_attribute in relations:
+            new_name = f"{name}.{relation_attribute}" if name else relation_attribute
+            new_names = _get_attributes(relation_model, new_name)
+            if new_names:
+                names += new_names
+            else:
+                names.append(new_name)
+
+        return names
+
     group, relations = [], []
     last_attribute = None
-    for attribute in _get_attributes(model):
+
+    attributes = _get_attributes(model)
+
+    for attribute in attributes:
         names = attribute.split(".")
         for i in range(1, len(names) + 1):
             sub_attribute, cls, verbose_name = ".".join(
@@ -92,7 +55,6 @@ def get_relation_group(model):
                 cls = attr(field, f"remote_field.model")
             if not verbose_name:
                 verbose_name = attr(cls, "_meta.verbose_name")
-            # print(verbose_name)
             relation = Relation(cls, sub_attribute, verbose_name)
             if not relations or sub_attribute.startswith(last_attribute):
                 relations.append(relation)
@@ -101,6 +63,7 @@ def get_relation_group(model):
                 relations = [relation]
             last_attribute = sub_attribute
 
+    print(relations)
     if relations:
         group.append(relations)
 
