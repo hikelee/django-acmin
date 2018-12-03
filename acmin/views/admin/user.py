@@ -9,14 +9,9 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import FormView
 
+from acmin.models import User
 from acmin.utils import attr
 from demo.forms.user import LoginForm, UserForm
-from acmin.models import User
-from . import BaseCreateView, BaseListView, BaseUpdateView
-
-
-class UserListView(BaseListView):
-    model = User
 
 
 class FormMixin:
@@ -37,14 +32,6 @@ class FormMixin:
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         return kwargs
-
-
-class UserCreateView(FormMixin, BaseCreateView):
-    pass
-
-
-class UserUpdateView(FormMixin, BaseUpdateView):
-    pass
 
 
 class LoginView(FormView):

@@ -7,8 +7,9 @@ from django.urls import path
 from acmin.utils import attr
 from acmin.views import get_urlpatterns
 from acmin.views.admin import get_view
+from acmin.views.admin import user
 from demo.forms.user import LoginForm
-from demo.views.admin import index as main_index, user
+from demo.views.admin import index as main_index
 
 app_name = __name__.split(".")[0]
 
