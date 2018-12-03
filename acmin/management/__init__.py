@@ -36,35 +36,41 @@ def init_contenttype():
 
 def init_fields(type_map):
     from acmin.models import AcminModel, Field
+    new = []
     for model in django.apps.apps.get_models():
         if issubclass(model, AcminModel):
+            group_sequence = 100
             base = type_map.get(model)
             attributes = []
+
+            fields = [field for field in attr(model, '_meta.fields') if not attr(field, "remote_field")]
+            for sequence, field in enumerate(fields, start=1):
+                name, verbose_name = attr(field, "name"), attr(field, '_verbose_name')
+                attributes.append(name)
+                if not Field.objects.filter(base=base, field_attribute=name).first():
+                    new.append(Field(
+                        base=base,
+                        field_attribute=name,
+                        group_sequence=group_sequence,
+                        sequence=sequence,
+                        verbose_name=verbose_name
+                    ))
             for group_sequence, relations in enumerate(get_relation_group(model), start=1):
                 for sequence, relation in enumerate(relations, start=1):
                     contenttype = type_map.get(relation.model)
-                    attribute = relation.attribute
-                    attributes.append(attribute)
-                    verbose_name = relation.verbose_name
-                    field = Field.objects.filter(base=base, attribute=attribute).first()
-                    if field:
-                        if (field.contenttype, field.group_sequence, field.sequence) != (contenttype, group_sequence, sequence):
-                            field.contenttype = contenttype
-                            field.group_sequence = group_sequence
-                            field.sequence = sequence
-                            field.save()
-
-                    else:
-                        Field.objects.create(
+                    attributes.append(relation.attribute)
+                    if not Field.objects.filter(base=base, field_attribute=relation.attribute).first():
+                        new.append(Field(
                             base=base,
-                            contenttype=contenttype,
-                            attribute=attribute,
+                            field_contenttype=f"{contenttype.app}.{contenttype.name}",
+                            field_attribute=relation.attribute,
                             group_sequence=group_sequence,
                             sequence=sequence,
-                            verbose_name=verbose_name
-                        )
+                            verbose_name=relation.verbose_name
+                        ))
 
-            Field.objects.filter(base=base).exclude(attribute__in=attributes).delete()
+            Field.objects.filter(base=base).exclude(field_attribute__in=attributes).delete()
+    Field.objects.bulk_create(new)
 
 
 def init_models(sender, **kwargs):
