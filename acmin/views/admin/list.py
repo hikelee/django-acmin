@@ -76,6 +76,7 @@ class ToolbarSearchFormMixin(SearchMixin):
         for fields in group_fields:
             fields = [field for field in reversed(fields) if field.field_contenttype]
             last_options = None
+            last_default_value = None
             for index in range(len(fields)):
                 field = fields[index]
                 attribute = field.field_attribute
@@ -85,18 +86,20 @@ class ToolbarSearchFormMixin(SearchMixin):
                     queryset = Filter.filter(cls.objects, self, cls)
                 else:
                     last_attribute = fields[index - 1].field_attribute
-                    last_value = params.get(last_attribute)
+                    last_value = params.get(last_attribute) or last_default_value
                     if last_value and last_options:
                         filters = {last_attribute[len(attribute) + 1:] + "_id": int(last_value)}
                         queryset = Filter.filter(cls.objects.filter(**filters), self, cls)
 
                 options = [(e.id, str(e)) for e in queryset.all()] if queryset else []
-                label = attr(cls, '_meta.verbose_name')
+                label = field.verbose_name
                 if len(options) > 1:
                     options = [('', '选择%s' % label)] + options
                 if options:
                     choices.append((attribute, ChoiceField(initial=params.get(attribute, ""), label=label, choices=options, )))
+                    last_default_value = options[0][0]
                 last_options = options
+
         return choices
 
 
