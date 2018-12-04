@@ -18,11 +18,13 @@ _all_filters = defaultdict(lambda: defaultdict(list))
 def get_all_filters():
     if not _all_filters:
         with lock:
-            for f in UserFilter.objects.all():
-                _all_filters[f.user][f.contenttype.get_model()].append(f)
             for f in GroupFilter.objects.all():
                 for user in User.objects.filter(group=f.group).all():
                     _all_filters[user][f.contenttype.get_model()].append(f)
+
+            for f in UserFilter.objects.all():
+                _all_filters[f.user][f.contenttype.get_model()].append(f)
+
     return _all_filters
 
 
@@ -36,7 +38,7 @@ class FilterValueType:
     ]
 
 
-class Filter(AcminModel):
+class  Filter(AcminModel):
     class Meta:
         abstract = True
 

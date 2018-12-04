@@ -1,9 +1,50 @@
+from collections import defaultdict
+
 from django.db import models
+from filelock import FileLock
 
 from .base import AcminModel
 from .contenttype import ContentType
 from .group import Group
 from .user import User
+
+_user_model_fields = defaultdict(lambda: defaultdict(list))
+
+lock = FileLock("field.lock")
+lock.release(force=True)
+
+
+def update_content_type(field):
+    if field.field_contenttype:
+        app, name = field.field_contenttype.split(".")
+        field.field_contenttype = ContentType.objects.filter(app=app, name=name).first()
+
+
+def get_all_fields():
+    if not _user_model_fields:
+        with lock:
+            for field in GroupField.objects.all():
+                update_content_type(field)
+                model = field.base.get_model()
+                for user in User.objects.filter(group=field.group).all():
+                    _user_model_fields[user][model].append(field)
+
+            for field in UserField.objects.all():
+                update_content_type(field)
+                model = field.base.get_model()
+                _user_model_fields[user][model].append(field)
+
+            for field in Field.objects.all():
+                update_content_type(field)
+                model = field.base.get_model()
+                for user in User.objects.all():
+                    _user_model_fields[user][model].append(field)
+
+            for user, model_map in _user_model_fields.items():
+                for model, _ in model_map.items():
+                    _user_model_fields[user][model].sort(key=lambda f: (f.group_sequence, f.sequence))
+
+    return _user_model_fields
 
 
 class BaseField(AcminModel):
@@ -19,6 +60,29 @@ class BaseField(AcminModel):
     list_available = models.BooleanField("列表中显示", default=True)
     form_available = models.BooleanField("表单中显示", default=True)
     verbose_name = models.CharField("显示名称", max_length=200)
+
+    @classmethod
+    def get_fields(cls, user, model):
+        return get_all_fields()[user][model]
+
+    @classmethod
+    def get_group_fields(cls, user, model):
+        result = []
+        group_sequence = -1
+        fields = []
+        for field in cls.get_fields(user, model):
+            if group_sequence != field.group_sequence:
+                group_sequence = field.group_sequence
+                if fields:
+                    result.append(fields)
+                fields = []
+            fields.append(field)
+        if fields:
+            result.append(fields)
+        return result
+
+    def __str__(self):
+        return self.field_attribute
 
 
 class Field(BaseField):

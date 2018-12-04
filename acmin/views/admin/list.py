@@ -9,9 +9,9 @@ from django.http import JsonResponse
 from django.views import generic
 from django.views.generic.list import BaseListView
 
-from acmin.models import Permission, PermissionItem, Filter
+from acmin.models import Permission, PermissionItem, Filter, Field
 from acmin.utils import (
-    attr, get_ancestor_attribute, get_ancestors_names, get_model_field_names
+    attr, get_ancestors_names, get_model_field_names
 )
 from acmin.utils import models as model_util
 from .mixins import ContextMixin, AccessMixin
@@ -71,35 +71,32 @@ class ToolbarSearchFormMixin(SearchMixin):
 
     def get_toolbar_search_fields(self):
         choices = []
-
-        relation_groups = model_util.get_relation_group(self.model)
+        group_fields = Field.get_group_fields(self.request.user, self.model)
         params = self.get_toolbar_search_params()
-
-        for relations in relation_groups:
-            last_cls, last_name = None, None
-            relations = list(reversed(relations))
-            for relation in relations:
-                name = relation.attribute
-                cls = relation.model
+        for fields in group_fields:
+            fields = [field for field in reversed(fields) if field.field_contenttype]
+            last_options = None
+            for index in range(len(fields)):
+                field = fields[index]
+                attribute = field.field_attribute
+                cls = field.field_contenttype.get_model()
                 queryset = None
-                if last_name:
-                    value = params.get(last_name, None)
-                    if value:
-                        attribute = get_ancestor_attribute(cls, last_cls)
-                        queryset = cls.objects.filter(**{attribute.replace(".", "__") + "_id": value})
-                else:
+                if index == 0:
                     queryset = Filter.filter(cls.objects, self, cls)
-
-                queryset = Filter.filter(queryset, self, cls)
+                else:
+                    last_attribute = fields[index - 1].field_attribute
+                    last_value = params.get(last_attribute)
+                    if last_value and last_options:
+                        filters = {last_attribute[len(attribute) + 1:] + "_id": int(last_value)}
+                        queryset = Filter.filter(cls.objects.filter(**filters), self, cls)
 
                 options = [(e.id, str(e)) for e in queryset.all()] if queryset else []
                 label = attr(cls, '_meta.verbose_name')
                 if len(options) > 1:
                     options = [('', '选择%s' % label)] + options
                 if options:
-                    choices.append((name, ChoiceField(initial=params.get(name, ""), label=label, choices=options, )))
-                    last_cls, last_name = cls, name
-
+                    choices.append((attribute, ChoiceField(initial=params.get(attribute, ""), label=label, choices=options, )))
+                last_options = options
         return choices
 
 
