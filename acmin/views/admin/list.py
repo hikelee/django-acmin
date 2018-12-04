@@ -97,7 +97,8 @@ class ToolbarSearchFormMixin(SearchMixin):
                     options = [('', '选择%s' % label)] + options
                 if options:
                     choices.append((attribute, ChoiceField(initial=params.get(attribute, ""), label=label, choices=options, )))
-                    last_default_value = options[0][0]
+
+                last_default_value = options[0][0] if options else None
                 last_options = options
 
         return choices
