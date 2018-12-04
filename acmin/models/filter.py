@@ -1,6 +1,8 @@
 from collections import defaultdict
 
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from filelock import FileLock
 
 from acmin.utils import attr
@@ -12,20 +14,28 @@ from .user import User
 lock = FileLock("filter.lock")
 lock.release(force=True)
 
-_all_filters = defaultdict(lambda: defaultdict(list))
+cache = defaultdict(lambda: defaultdict(list))
+
+
+@receiver(post_save)
+@receiver(post_delete)
+def clear_filter(sender, **kwargs):
+    if sender in [Group, User] or issubclass(sender, Filter):
+        with lock:
+            cache.clear()
 
 
 def get_all_filters():
-    if not _all_filters:
+    if not cache:
         with lock:
             for f in GroupFilter.objects.all():
                 for user in User.objects.filter(group=f.group).all():
-                    _all_filters[user][f.contenttype.get_model()].append(f)
+                    cache[user][f.contenttype.get_model()].append(f)
 
             for f in UserFilter.objects.all():
-                _all_filters[f.user][f.contenttype.get_model()].append(f)
+                cache[f.user][f.contenttype.get_model()].append(f)
 
-    return _all_filters
+    return cache
 
 
 class FilterValueType:
@@ -38,7 +48,7 @@ class FilterValueType:
     ]
 
 
-class  Filter(AcminModel):
+class Filter(AcminModel):
     class Meta:
         abstract = True
 
@@ -48,11 +58,6 @@ class  Filter(AcminModel):
     attribute = models.CharField("属性名", max_length=100)
     value = models.CharField("属性值", max_length=500)
     enabled = models.BooleanField("开通", default=True)
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        with lock:
-            _all_filters.clear()
 
     @classmethod
     def get_filters_dict(cls, view, user, model):

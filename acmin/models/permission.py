@@ -1,6 +1,8 @@
 import collections
 
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from filelock import FileLock
 
 from acmin.utils import attr
@@ -9,42 +11,50 @@ from .contenttype import ContentType
 from .group import Group
 from .user import User
 
-_all_permissions = collections.defaultdict(dict)
+cache = collections.defaultdict(dict)
 
 lock = FileLock("permission.lock")
 lock.release(force=True)
 
 
+@receiver(post_delete)
+@receiver(post_save)
+def clear_permissions(sender, **kwargs):
+    if sender in [Group, User] or issubclass(sender, Permission):
+        with lock:
+            cache.clear()
+
+
 def _get_permissions():
-    if not _all_permissions:
+    if not cache:
         with lock:
             contenttypes = ContentType.objects.all()
             for permission in GroupPermission.objects.all():
                 for user in User.objects.filter(group=permission.group):
-                    _all_permissions[user][permission.contenttype.get_model()] = permission
+                    cache[user][permission.contenttype.get_model()] = permission
             for permission in UserPermission.objects.all():
-                _all_permissions[permission.user][permission.contenttype.get_model()] = permission
+                cache[permission.user][permission.contenttype.get_model()] = permission
 
             for permission in GroupPermission.objects.filter(contenttype__name=SuperPermissionModel.__name__):
                 for user in User.objects.filter(group=permission.group):
                     for contenttype in contenttypes:
                         model = contenttype.get_model()
-                        if model not in _all_permissions[user]:
-                            _all_permissions[user][model] = permission
+                        if model not in cache[user]:
+                            cache[user][model] = permission
 
             for permission in UserPermission.objects.filter(contenttype__name=SuperPermissionModel.__name__):
                 for contenttype in contenttypes:
                     model = contenttype.get_model()
-                    if model not in _all_permissions[permission.user]:
-                        _all_permissions[permission.user][model] = permission
+                    if model not in cache[permission.user]:
+                        cache[permission.user][model] = permission
 
             for user in User.objects.all():
                 for contenttype in contenttypes:
                     model = contenttype.get_model()
-                    if model not in _all_permissions[user]:
-                        _all_permissions[user][model] = UserPermission(user=user, contenttype=contenttype)
+                    if model not in cache[user]:
+                        cache[user][model] = UserPermission(user=user, contenttype=contenttype)
 
-    return _all_permissions
+    return cache
 
 
 class ModelPermission:
@@ -85,11 +95,6 @@ class Permission(AcminModel):
     exportable = models.BooleanField("可导出", default=False)
     viewable = models.BooleanField("可查看", default=False)
     listable = models.BooleanField("可列表", default=False)
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        with lock:
-            _all_permissions.clear()
 
     def to_instance_permission(self):
         return ModelPermission(

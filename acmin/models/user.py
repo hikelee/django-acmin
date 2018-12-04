@@ -11,7 +11,7 @@ class User(AbstractUser, AcminModel):
     class Meta:
         verbose_name_plural = verbose_name = "用户"
 
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
     title = models.CharField('名称', max_length=50, blank=False, null=False)
 
     def __str__(self):

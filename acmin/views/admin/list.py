@@ -80,7 +80,7 @@ class ToolbarSearchFormMixin(SearchMixin):
             for index in range(len(fields)):
                 field = fields[index]
                 attribute = field.field_attribute
-                cls = field.field_contenttype.get_model()
+                cls = field.model
                 queryset = None
                 if index == 0:
                     queryset = Filter.filter(cls.objects, self, cls)

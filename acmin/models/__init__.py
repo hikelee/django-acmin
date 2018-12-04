@@ -1,5 +1,5 @@
 from .base import AcminModel
-from .contenttype import ContentType, GroupContentType, UserContentType
+from .contenttype import ContentType
 from .field import Field, GroupField, UserField, BaseField
 from .filter import UserFilter, GroupFilter, FilterValueType, Filter
 from .group import Group

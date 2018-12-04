@@ -48,3 +48,9 @@ class AcminModel(models.Model, metaclass=BaseMeta):
             return Permission.get_permission(request.user, self.__class__).to_instance_permission()
         else:
             return Permission()
+
+    @classmethod
+    def get_contenttype_key(cls):
+        app = cls.__module__.split(".")[0]
+        name = cls.__name__
+        return app + "." + name

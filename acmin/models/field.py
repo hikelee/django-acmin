@@ -1,6 +1,8 @@
 from collections import defaultdict
 
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from filelock import FileLock
 
 from .base import AcminModel
@@ -8,43 +10,42 @@ from .contenttype import ContentType
 from .group import Group
 from .user import User
 
-_user_model_fields = defaultdict(lambda: defaultdict(list))
+cache = defaultdict(lambda: defaultdict(list))
 
 lock = FileLock("field.lock")
 lock.release(force=True)
 
 
-def update_content_type(field):
-    if field.field_contenttype:
-        app, name = field.field_contenttype.split(".")
-        field.field_contenttype = ContentType.objects.filter(app=app, name=name).first()
+@receiver(post_save)
+@receiver(post_delete)
+def handle_model_change(sender, **kwargs):
+    if sender in [Group, User] or issubclass(sender, BaseField):
+        with lock:
+            cache.clear()
 
 
 def get_all_fields():
-    if not _user_model_fields:
+    if not cache:
         with lock:
             for field in GroupField.objects.all():
-                update_content_type(field)
                 model = field.base.get_model()
                 for user in User.objects.filter(group=field.group).all():
-                    _user_model_fields[user][model].append(field)
+                    cache[user][model].append(field)
 
             for field in UserField.objects.all():
-                update_content_type(field)
                 model = field.base.get_model()
-                _user_model_fields[user][model].append(field)
+                cache[user][model].append(field)
 
             for field in Field.objects.all():
-                update_content_type(field)
                 model = field.base.get_model()
                 for user in User.objects.all():
-                    _user_model_fields[user][model].append(field)
+                    cache[user][model].append(field)
 
-            for user, model_map in _user_model_fields.items():
+            for user, model_map in cache.items():
                 for model, _ in model_map.items():
-                    _user_model_fields[user][model].sort(key=lambda f: (f.group_sequence, f.sequence))
+                    cache[user][model].sort(key=lambda f: (f.group_sequence, f.sequence))
 
-    return _user_model_fields
+    return cache
 
 
 class BaseField(AcminModel):
@@ -64,6 +65,16 @@ class BaseField(AcminModel):
     @classmethod
     def get_fields(cls, user, model):
         return get_all_fields()[user][model]
+
+    @property
+    def contenttype(self):
+        if self.field_contenttype:
+            return ContentType.get_by_key(self.field_contenttype)
+
+    @property
+    def model(self):
+        if self.field_contenttype:
+            return ContentType.get_model_by_key(self.field_contenttype)
 
     @classmethod
     def get_group_fields(cls, user, model):

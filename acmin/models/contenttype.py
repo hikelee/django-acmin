@@ -1,5 +1,7 @@
 import django.apps
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from filelock import FileLock
 
 from .base import AcminModel
@@ -9,37 +11,24 @@ from .user import User
 lock = FileLock("contenttype.lock")
 lock.release(force=True)
 
-_model_contenttype_map = dict()
-_contenttype_model_map = dict()
+cache = dict()
 
 
-def _init_map():
-    with lock:
-        _model_contenttype_map.clear()
-        _contenttype_model_map.clear()
-
-        x = {}
-        for contenttype in ContentType.objects.all():
-            x[contenttype.app + "-" + contenttype.name] = contenttype
-
-        for model in [model for model in django.apps.apps.get_models() if issubclass(model, AcminModel)]:
-            app = model.__module__.split(".")[0]
-            name = model.__name__
-            contenttype = x[app + "-" + name]
-            _model_contenttype_map[model] = contenttype
-            _contenttype_model_map[contenttype] = model
+def get_map():
+    if not cache:
+        with lock:
+            contenttypes = {contenttype.get_key(): contenttype for contenttype in ContentType.objects.all()}
+            cache['contenttypes'] = contenttypes
+            cache['models'] = {model.get_contenttype_key(): model for model in django.apps.apps.get_models() if issubclass(model, AcminModel)}
+    return cache
 
 
-def get_model_contenttype_map():
-    if not _model_contenttype_map:
-        _init_map()
-    return _model_contenttype_map
-
-
-def get_contenttype_model_map():
-    if not _contenttype_model_map:
-        _init_map()
-    return _contenttype_model_map
+@receiver(post_save)
+@receiver(post_delete)
+def clear_map(sender, **kwargs):
+    if sender in [Group, User] or issubclass(sender, BaseContentType):
+        with lock:
+            cache.clear()
 
 
 class BaseContentType(AcminModel):
@@ -50,11 +39,6 @@ class BaseContentType(AcminModel):
     name = models.CharField("名称", max_length=100)
     verbose_name = models.CharField("描述", max_length=100)
     sequence = models.IntegerField("排序", default=100)
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        with lock:
-            _init_map()
 
     def __str__(self):
         return self.verbose_name
@@ -68,11 +52,21 @@ class ContentType(BaseContentType):
 
     @classmethod
     def get_by_model(cls, model):
-        return get_model_contenttype_map()[model]
+        return get_map()['contenttypes'][model.get_contenttype_key()]
 
     def get_model(self):
-        result = get_contenttype_model_map()[self]
-        return result
+        return get_map()['models'][self.get_key()]
+
+    def get_key(self):
+        return self.app + "." + self.name
+
+    @classmethod
+    def get_by_key(cls, key):
+        return get_map()['contenttypes'][key]
+
+    @classmethod
+    def get_model_by_key(cls, key):
+        return get_map()['models'][key]
 
 
 class GroupContentType(BaseContentType):
