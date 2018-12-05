@@ -58,8 +58,11 @@ class BaseField(AcminModel):
     group_sequence = models.IntegerField("分组序号")
     sequence = models.IntegerField("序号")
 
-    list_available = models.BooleanField("列表中显示", default=True)
-    form_available = models.BooleanField("表单中显示", default=True)
+    listable = models.BooleanField("在列表中显示", default=True)
+    formable = models.BooleanField("在表单中显示", default=True)
+    sortable = models.BooleanField("可排序", default=True)
+    exportable = models.BooleanField("可导出", default=True)
+
     verbose_name = models.CharField("显示名称", max_length=200)
 
     @classmethod

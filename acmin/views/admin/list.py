@@ -6,7 +6,7 @@ from django.views import generic
 from django.views.generic.list import BaseListView
 
 from acmin.models import Permission, PermissionItem, Filter, Field
-from acmin.utils import attr, get_ancestors_names, param, json_response
+from acmin.utils import attr, param, json_response
 from .mixins import ContextMixin, AccessMixin
 
 
@@ -43,15 +43,10 @@ class ToolbarSearchFormMixin(SearchMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["toolbar_search_form"] = self.get_toolbar_search_form()
-        names = [x for x in get_ancestors_names(self.model)]
-        print(names)
-        context['hierarchy'] = {e: names[0:index] for index, e in enumerate(names)}
         return context
 
     def get_toolbar_search_form(self):
-        choices = self.get_toolbar_search_fields()
-        # print(choices)
-        choices += self.get_toolbar_extra_search_choices()
+        choices = self.get_toolbar_search_fields() + self.get_toolbar_extra_search_choices()
         if choices:
             fields = OrderedDict(choices)
             form = FilterForm()
@@ -118,10 +113,6 @@ class ToolbarSearchMixin(SearchMixin):
                     queryset = queryset.filter(**{field.field_attribute.replace(".", "__") + "_id": value})
                     break
 
-        model_filters = self.get_request_model_filters()
-        if model_filters:
-            queryset = queryset.filter(**model_filters)
-
         sort = self.request.GET.get("sort")
         if sort:
             queryset = queryset.order_by(sort.replace('.', '__'))
@@ -153,21 +144,11 @@ class AdminListView(
     paginate_by = 30
     form_class = None
 
-    def get_toolbar_search_fields(self):
-        return super().get_toolbar_search_fields()
-
-    def get_model_exclude_names(self):
-        return attr(self.model, "list_exclude", [])
-
-    def get_model_include_names(self):
-        return attr(self.model, "list_fields")
-
     def get_model_list_fields(self):
-        return [field for field in Field.get_fields(self.request.user, self.model) if field.list_available and not field.field_contenttype]
+        return [field for field in Field.get_fields(self.request.user, self.model) if field.listable and not field.field_contenttype]
 
     def get_relation_fields(self):
-        fields = [field for field in Field.get_fields(self.request.user, self.model) if field.list_available and field.field_contenttype]
-
+        fields = [field for field in Field.get_fields(self.request.user, self.model) if field.listable and field.field_contenttype]
         fields.reverse()
         return fields
 

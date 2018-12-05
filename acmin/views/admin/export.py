@@ -6,22 +6,9 @@ from django.http import HttpResponse
 from django.utils.http import urlquote
 from django.utils.six import BytesIO
 
-from acmin.models import Permission, PermissionItem
-from acmin.utils import attr, display, decorators, get_model_fields
+from acmin.models import Permission, PermissionItem, Field
+from acmin.utils import attr, display
 from .list import AdminListView
-
-
-@decorators.memorize
-def get_export_fields(cls) -> list:
-    names = attr(cls, "export_fields", attr(cls, "list_fields"))
-    model_fields = get_model_fields(cls)
-    if not names:
-        export_fields = [f.name for f in model_fields]
-        excludes = attr(cls, "export_exclude", attr(cls, "list_exclude", [])) + ['created', 'modified']
-        names = [f for f in export_fields if f not in excludes]
-
-    fields_dict = {f.name: f.verbose_name for f in model_fields}
-    return [Field(name, fields_dict.pop(name, name), name) for name in names]
 
 
 class AdminExportView(AdminListView):
@@ -31,7 +18,7 @@ class AdminExportView(AdminListView):
         return Permission.has_permission(self.request.user, self.model, PermissionItem.exportable)
 
     def get_fields(self):
-        return get_export_fields(self.model)
+        return [field for field in Field.get_fields(self.request.user, self.model) if field.exportable]
 
     def get(self, request, *args, **kwargs):
         return self.export_excel(self.get_queryset())
