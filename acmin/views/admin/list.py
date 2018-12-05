@@ -161,6 +161,7 @@ class AdminListView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({"list_fields": self.get_list_fields()})
+        context["view_type"] = 'list'
         for obj in context.get("list"):
             setattr(obj, "_request", self.request)
 

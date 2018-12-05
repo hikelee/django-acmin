@@ -47,26 +47,31 @@ def init_fields(type_map):
             for sequence, field in enumerate(fields, start=1):
                 name, verbose_name = attr(field, "name"), attr(field, '_verbose_name')
                 attributes.append(name)
+                field_type = type(field)
+                python_type = f"{field_type.__module__}.{field_type.__name__}"
                 if not Field.objects.filter(base=base, field_attribute=name).first():
                     new.append(Field(
                         base=base,
                         field_attribute=name,
                         group_sequence=group_sequence,
                         sequence=sequence,
-                        verbose_name=verbose_name
+                        verbose_name=verbose_name,
+                        python_type=python_type
                     ))
-            for group_sequence, relations in enumerate(get_relation_group(model), start=1):
-                for sequence, relation in enumerate(relations, start=1):
-                    contenttype = type_map.get(relation.model)
-                    attributes.append(relation.attribute)
-                    if not Field.objects.filter(base=base, field_attribute=relation.attribute).first():
+
+            for group_sequence, fields in enumerate(get_foreing_fields_group(model), start=1):
+                for sequence, field in enumerate(fields, start=1):
+                    contenttype = type_map.get(field.model)
+                    attributes.append(field.attribute)
+                    if not Field.objects.filter(base=base, field_attribute=field.attribute).first():
                         new.append(Field(
                             base=base,
                             field_contenttype=f"{contenttype.app}.{contenttype.name}",
-                            field_attribute=relation.attribute,
+                            field_attribute=field.attribute,
                             group_sequence=group_sequence,
                             sequence=sequence,
-                            verbose_name=relation.verbose_name
+                            verbose_name=field.verbose_name,
+                            python_type=field.python_type
                         ))
 
             Field.objects.filter(base=base).exclude(field_attribute__in=attributes).delete()
@@ -78,12 +83,13 @@ def init_models(sender, **kwargs):
     init_fields(type_map)
 
 
-def get_relation_group(model):
+def get_foreing_fields_group(model):
     class Relation(object):
-        def __init__(self, model, attribute, verbose_name):
+        def __init__(self, model, attribute, verbose_name, python_type):
             self.model = model
             self.attribute = attribute
             self.verbose_name = verbose_name
+            self.python_type = python_type
 
         def __repr__(self):
             return f"({self.model},{self.attribute},{self.verbose_name})"
@@ -121,15 +127,16 @@ def get_relation_group(model):
     for attribute in attributes:
         names = attribute.split(".")
         for i in range(1, len(names) + 1):
-            sub_attribute, cls, verbose_name = ".".join(
-                names[0:i]), model, None
+            sub_attribute, cls, verbose_name, field = ".".join(names[0:i]), model, None, None
             for name in sub_attribute.split("."):
                 field = attr(cls, f"{name}.field")
                 verbose_name = attr(field, "_verbose_name")
                 cls = attr(field, f"remote_field.model")
             if not verbose_name:
                 verbose_name = attr(cls, "_meta.verbose_name")
-            relation = Relation(cls, sub_attribute, verbose_name)
+
+            field_type = type(field)
+            relation = Relation(cls, sub_attribute, verbose_name, f"{field_type.__module__}.{field_type.__name__}")
             if not relations or sub_attribute.startswith(last_attribute):
                 relations.append(relation)
             elif relations:

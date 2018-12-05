@@ -43,8 +43,6 @@ class AccessMixin:
         return True
 
 
-
-
 class ContextMixin(object):
     @property
     def user(self):

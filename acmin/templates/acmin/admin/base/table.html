@@ -1,6 +1,7 @@
 {% load attr %}
 {% load truncate %}
 {% load display %}
+{% load define %}
 {% block table %}
     <table id="simple-table" class="table  table-bordered table-hover">
         <thead>
@@ -42,7 +43,7 @@
                         {% for field in list_fields %}
                             <td style="color:{{ instance.css_color }}">
                                 {% block field-td %}
-                                    {% if field.class_name and viewable %}
+                                    {% if field.class_name and instance.instance_permission.viewable %}
                                         {% with id=field.field_attribute|add:".id" %}
                                             <a href="#!name=/{{ field.class_name }}/{{ instance|attr:id }}/">
                                                 {{ instance|display:field.field_attribute|truncate }}

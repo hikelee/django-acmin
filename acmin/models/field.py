@@ -57,6 +57,7 @@ class BaseField(AcminModel):
     field_contenttype = models.CharField(verbose_name="字段模型", max_length=100, null=True, blank=True)
     group_sequence = models.IntegerField("分组序号")
     sequence = models.IntegerField("序号")
+    python_type = models.CharField("原生类型",max_length=200)
 
     listable = models.BooleanField("在列表中显示", default=True)
     formable = models.BooleanField("在表单中显示", default=True)
@@ -78,6 +79,11 @@ class BaseField(AcminModel):
     def model(self):
         if self.field_contenttype:
             return ContentType.get_model_by_key(self.field_contenttype)
+
+    @property
+    def class_name(self):
+        if self.field_contenttype:
+            return self.field_contenttype.split(".")[-1]
 
     @classmethod
     def get_group_fields(cls, user, model, contenttype=False, reverse=False):
