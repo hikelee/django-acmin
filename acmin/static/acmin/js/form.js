@@ -11,11 +11,7 @@ function addChangeEvent(field_group) {
                     let select = $(selector);
                     select.html("");
                     if (k == j + 1) {
-                        $.getJSON(window.urlPrefix + '/' + fields[k].class + '/', {
-                            choices: true,
-                            attribute: attribute.substr(sub_attribute.length + 1),
-                            value: value
-                        }, function (data) {
+                        $.getJSON(window.urlPrefix + '/' + fields[k].class + '/', {choices: true, attribute: attribute.substr(sub_attribute.length + 1), value: value}, function (data) {
                             $(selector).append("<option value=''>------</option>");
                             $(data).each(function (i, obj) {
                                 let text = obj["title"];
