@@ -5,7 +5,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.forms import ChoiceField
 
 from acmin.models import Permission, PermissionItem, Filter, Field
-from acmin.utils import attr, get_ancestors
+from acmin.utils import attr
 from .mixins import ContextMixin, AccessMixin
 
 
@@ -23,31 +23,11 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         self._add_relation_choices(context)
-        context["ancestors"] = self.get_ancestor_attribute_variables()
+
         context["model"] = self.model
         context["model_name"] = self.model.__name__
 
         return context
-
-    def get_ancestor_attribute_variables(self):
-        cls = self.model
-        ancestors = list(reversed(get_ancestors(cls)))
-        length = len(ancestors)
-
-        def to_dict(chain):
-            name, cls = chain
-            return dict(
-                name=name,
-                class_name=cls.__name__,
-                filters=Filter.get_filters_dict(self, self.request.user, cls)
-            )
-
-        result = [dict(
-            name=name,
-            child=to_dict(ancestors[index + 1]),
-            offsprings=[to_dict(c) for c in ancestors[index + 1:length]]
-        ) for index, (name, cls) in enumerate(ancestors[0:length - 1])]
-        return result
 
     def _add_relation_choices(self, context):
         user = self.request.user
@@ -90,4 +70,4 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
         fields = OrderedDict(choices)
         fields.update(form.fields)
         form.fields = fields
-        context["field_group"] = json.dumps(group_array)
+        context["group_fields_json"] = json.dumps(group_array)

@@ -7,7 +7,7 @@ from django.utils.http import urlquote
 from django.utils.six import BytesIO
 
 from acmin.models import Permission, PermissionItem
-from acmin.utils import attr, display, decorators, get_model_fields, Field
+from acmin.utils import attr, display, decorators, get_model_fields
 from .list import AdminListView
 
 

@@ -10,7 +10,7 @@
                     <th>操作</th>
                 {% endif %}
                 {% for field in list_fields %}
-                    <th>{{ field.verbose }}{% include "acmin/admin/base/sort.html" %}</th>
+                    <th>{{ field.verbose_name }}{% include "acmin/admin/base/sort.html" %}</th>
                 {% endfor %}
                 {% block post_th %} {% endblock %}
             </tr>
@@ -43,13 +43,13 @@
                             <td style="color:{{ instance.css_color }}">
                                 {% block field-td %}
                                     {% if field.class_name and viewable %}
-                                        {% with id=field.attribute_name|add:".id" %}
+                                        {% with id=field.field_attribute|add:".id" %}
                                             <a href="#!name=/{{ field.class_name }}/{{ instance|attr:id }}/">
-                                                {{ instance|display:field.attribute_name|truncate }}
+                                                {{ instance|display:field.field_attribute|truncate }}
                                             </a>
                                         {% endwith %}
                                     {% else %}
-                                        {{ instance|display:field.attribute_name|truncate }}
+                                        {{ instance|display:field.field_attribute|truncate }}
                                     {% endif %}
                                 {% endblock %}
                             </td>

@@ -1,6 +1,4 @@
-import operator
 from collections import OrderedDict
-from functools import reduce
 
 from django.db.models import Q
 from django.forms import ChoiceField, forms
@@ -8,21 +6,18 @@ from django.views import generic
 from django.views.generic.list import BaseListView
 
 from acmin.models import Permission, PermissionItem, Filter, Field
-from acmin.utils import attr, get_ancestors_names, get_model_field_names, param, json_response
-from acmin.utils import models as model_util
+from acmin.utils import attr, get_ancestors_names, param, json_response
 from .mixins import ContextMixin, AccessMixin
 
 
 class SearchMixin(BaseListView):
     def get_toolbar_search_params(self):
-        groups = model_util.get_relation_group(self.model)
-        if groups:
-            relation_names = [x.attribute for x in reduce(operator.add, groups)]
-            return {k: v for k, v in self.request.GET.items() if k in relation_names and v}
-        return {}
+        fields = [field.field_attribute for field in Field.get_fields(self.request.user, self.model)]
+        return {k: v for k, v in self.request.GET.items() if k in fields and v}
 
     def get_request_model_filters(self):
-        return {k: v for k, v in self.request.GET.items() if k in get_model_field_names(self.model) and v}
+        fields = [field.field_attribute for field in Field.get_fields(self.request.user, self.model)]
+        return {k: v for k, v in self.request.GET.items() if k in fields and v}
 
 
 class FuzzySearchMixin(BaseListView):
@@ -49,6 +44,7 @@ class ToolbarSearchFormMixin(SearchMixin):
         context = super().get_context_data(**kwargs)
         context["toolbar_search_form"] = self.get_toolbar_search_form()
         names = [x for x in get_ancestors_names(self.model)]
+        print(names)
         context['hierarchy'] = {e: names[0:index] for index, e in enumerate(names)}
         return context
 
@@ -114,11 +110,12 @@ class ToolbarSearchMixin(SearchMixin):
     def get_queryset(self):
         queryset = super().get_queryset()
         params = self.get_toolbar_search_params()
-        for relations in model_util.get_relation_group(self.model):
-            for relation in relations:
-                value = params.get(relation.attribute, None)
+        fields_group = Field.get_group_fields(self.request.user, self.model, contenttype=True)
+        for fields in fields_group:
+            for field in fields:
+                value = params.get(field.field_attribute, None)
                 if value:
-                    queryset = queryset.filter(**{relation.attribute.replace(".", "__") + "_id": value})
+                    queryset = queryset.filter(**{field.field_attribute.replace(".", "__") + "_id": value})
                     break
 
         model_filters = self.get_request_model_filters()
@@ -134,10 +131,10 @@ class ToolbarSearchMixin(SearchMixin):
 
 class ChoiceResponseMixin(BaseListView):
     def get(self, request, *args, **kwargs):
-        choices, name, value = param(request, ["choices", "name", "value"])
-        if choices and name and value:
+        choices, attribute, value = param(request, ["choices", "attribute", "value"])
+        if choices and attribute and value:
             queryset = self.model.objects
-            queryset = queryset.filter(**{name.replace(".", "__") + "_id": int(value)})
+            queryset = queryset.filter(**{attribute.replace(".", "__") + "_id": int(value)})
             return json_response([{"id": obj.id, "title": str(obj)} for obj in queryset.all()], safe=False)
         return super().get(request, args, kwargs)
 
@@ -166,36 +163,10 @@ class AdminListView(
         return attr(self.model, "list_fields")
 
     def get_model_list_fields(self):
-        cls = self.model
-        names = self.get_model_include_names()
-        model_fields = model_util.get_model_fields(cls)
-        field_dict = OrderedDict([(f.name, f) for f in model_fields])
-        if names == '__all__' or not names:
-            names = [f.name for f in model_fields]
-        excludes = self.get_model_exclude_names()
-        excludes = excludes + [
-            f.name for f in model_fields if f.related_model
-        ]
-        result = []
-        for name in names:
-            verbose_name = None
-            orderable = True
-            if isinstance(name, tuple):
-                name, verbose_name = name
-                orderable = False
-            if name not in excludes:
-                if not verbose_name:
-                    verbose_name = field_dict[name].verbose_name if name in field_dict else name
-                field = model_util.Field(name, verbose_name, name, None, orderable)
-                result.append(field)
-
-        return result
+        return [field for field in Field.get_fields(self.request.user, self.model) if field.list_available and not field.field_contenttype]
 
     def get_relation_fields(self):
-        from acmin.utils import models
-        fields = [model_util.Field(relation.attribute.split(".").pop(), relation.verbose_name, relation.attribute,
-                                   relation.model.__name__)
-                  for relations in models.get_relation_group(self.model) for relation in relations]
+        fields = [field for field in Field.get_fields(self.request.user, self.model) if field.list_available and field.field_contenttype]
 
         fields.reverse()
         return fields

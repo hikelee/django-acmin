@@ -1,72 +1,8 @@
 from django.db.models.fields.related import ForeignKey
 
-from . import attr, auto_repr, first, memorize
+from . import attr, first, memorize
 
 
-@memorize
-def get_relation_group(model):
-    class Relation(object):
-        def __init__(self, model, attribute, verbose_name):
-            self.model = model
-            self.attribute = attribute
-            self.verbose_name = verbose_name
-
-        def __repr__(self):
-            return f"({self.model},{self.attribute},{self.verbose_name})"
-
-    def get_relation1(cls):
-        relations = []
-        fields = attr(cls, '_meta.fields')
-        for field in fields:
-            remote_field = attr(field, "remote_field")
-            if remote_field:
-                related_model = attr(remote_field, "model")
-                field = attr(remote_field, "field")
-                if type(field) is ForeignKey:
-                    relations.append((related_model, attr(field, "name")))
-        return relations
-
-    def _get_attributes(cls, name=None):
-        relations = get_relation1(cls)
-        names = []
-        for relation_model, relation_attribute in relations:
-            new_name = f"{name}.{relation_attribute}" if name else relation_attribute
-            new_names = _get_attributes(relation_model, new_name)
-            if new_names:
-                names += new_names
-            else:
-                names.append(new_name)
-
-        return names
-
-    group, relations = [], []
-    last_attribute = None
-
-    attributes = _get_attributes(model)
-
-    for attribute in attributes:
-        names = attribute.split(".")
-        for i in range(1, len(names) + 1):
-            sub_attribute, cls, verbose_name = ".".join(
-                names[0:i]), model, None
-            for name in sub_attribute.split("."):
-                field = attr(cls, f"{name}.field")
-                verbose_name = attr(field, "_verbose_name")
-                cls = attr(field, f"remote_field.model")
-            if not verbose_name:
-                verbose_name = attr(cls, "_meta.verbose_name")
-            relation = Relation(cls, sub_attribute, verbose_name)
-            if not relations or sub_attribute.startswith(last_attribute):
-                relations.append(relation)
-            elif relations:
-                group.append(relations)
-                relations = [relation]
-            last_attribute = sub_attribute
-
-    if relations:
-        group.append(relations)
-
-    return group
 
 
 @memorize
@@ -95,9 +31,6 @@ def get_model_field(cls, name):
     return first([f for f in attr(cls, '_meta.fields') if f.name == name])
 
 
-@memorize
-def get_model_field_names(cls) -> list:
-    return [x.name for x in get_model_fields(cls)]
 
 
 @memorize
@@ -143,16 +76,3 @@ def get_parents(cls) -> list:
                 if isinstance(i, ForeignKey):
                     result.append((field.name, i.related_model))
     return result
-
-
-@auto_repr
-class Field:
-    def __init__(self, name, verbose, attribute_name, class_name=None, orderable=True, is_image=False):
-        self.name = name
-        self.verbose = verbose
-        self.attribute_name = attribute_name
-        self.class_name = class_name
-        self.orderable = orderable
-        self.is_image = is_image
-
-# @memorize
