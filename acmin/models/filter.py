@@ -81,13 +81,13 @@ class Filter(AcminModel):
 
 class GroupFilter(Filter):
     class Meta:
-        verbose_name_plural = verbose_name = "组过滤器"
+        verbose_name_plural = verbose_name = "过滤器(用户组)"
 
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
 
 
 class UserFilter(Filter):
     class Meta:
-        verbose_name_plural = verbose_name = "用户过滤器"
+        verbose_name_plural = verbose_name = "过滤器(用户)"
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)

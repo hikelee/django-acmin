@@ -12,21 +12,16 @@ class Command(BaseCommand):
         python manage.py initdata
     """
 
-    def import_area(self):
+    @staticmethod
+    def import_area():
         file = settings.BASE_DIR + "/demo/data/area.json"
         with open(file, "r", encoding="UTF-8") as f:
-            for province_code, province_obj in json.load(f).items():
-                province = Province.objects.create(code=province_code, name=province_obj.get("name"))
-                cities = province_obj["child"]
-                if cities:
-                    for city_code, city_obj in cities.items():
-                        city = City.objects.create(province=province, code=city_code, name=city_obj["name"])
-                        areaes = city_obj["child"]
-                        if areaes:
-                            area_array = []
-                            for area_code, area_name in areaes.items():
-                                area_array.append(Area(city=city, code=area_code, name=area_name))
-                                Area.objects.bulk_create(area_array)
+            data = json.load(f)
+            Province.objects.bulk_create([Province(code=code, name=obj.get("name")) for code, obj in data.items()])
+            provinces = {o.code: o for o in Province.objects.all()}
+            City.objects.bulk_create([City(province=provinces[pc], code=cc, name=co["name"]) for pc, po in data.items() for cc, co in (po["child"] or {}).items()])
+            cities = {o.code: o for o in City.objects.all()}
+            Area.objects.bulk_create([Area(city=cities[cc], code=ac, name=name) for pc, po in data.items() for cc, co in (po["child"] or {}).items() for ac, name in (co["child"] or {}).items()])
 
     def handle(self, *args, **options):
 

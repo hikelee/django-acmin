@@ -123,7 +123,7 @@ class Permission(AcminModel):
 
 class GroupPermission(Permission):
     class Meta:
-        verbose_name_plural = verbose_name = "用户组权限"
+        verbose_name_plural = verbose_name = "权限(用户组)"
         unique_together = (('group', 'contenttype'),)
 
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
@@ -131,7 +131,7 @@ class GroupPermission(Permission):
 
 class UserPermission(Permission):
     class Meta:
-        verbose_name_plural = verbose_name = "用户权限"
+        verbose_name_plural = verbose_name = "权限(用户)"
         unique_together = (('user', 'contenttype'),)
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
