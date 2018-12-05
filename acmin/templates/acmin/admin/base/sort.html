@@ -2,7 +2,7 @@
 {% load concat %}
 {% load define %}
 
-{% if field.orderable %}
+{% if field.sortable %}
     {% define "alert-danger" as clazz %}
     {% if request.GET|attr:"sort" == "-"|concat:field.attribute_name %}
         {% define clazz as descClass %}
