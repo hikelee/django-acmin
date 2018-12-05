@@ -8,7 +8,7 @@ class Area(BaseModel):
     search_fields = ['province__name', 'name']
 
     class Meta:
-        ordering = ['-id']
+        ordering = ['id']
         verbose_name = verbose_name_plural = "地区"
 
     city = models.ForeignKey(City, on_delete=models.CASCADE)

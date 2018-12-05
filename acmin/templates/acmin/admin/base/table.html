@@ -49,6 +49,12 @@
                                                 {{ instance|display:field.field_attribute|truncate }}
                                             </a>
                                         {% endwith %}
+                                    {% elif field.python_type == 'django.db.models.fields.BooleanField' %}
+                                        <input name="{{ field.field_attribute }}" type="checkbox" onchange="updateBoolAttribute('{{ model_name }}',{{ instance.id }},this)"
+                                                {% if instance|attr:field.field_attribute %}
+                                               checked
+                                                {% endif %}
+                                        />
                                     {% else %}
                                         {{ instance|display:field.field_attribute|truncate }}
                                     {% endif %}

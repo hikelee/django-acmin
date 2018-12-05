@@ -7,7 +7,7 @@ class Province(BaseModel):
     search_fields = ['name']
 
     class Meta:
-        ordering = ['-id']
+        ordering = ['id']
         verbose_name = verbose_name_plural = "省份"
 
     code = models.CharField("代码", max_length=10)

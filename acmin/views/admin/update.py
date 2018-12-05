@@ -1,12 +1,27 @@
 from django.urls import reverse
 from django.views.generic.edit import UpdateView
 
-from acmin.models import Permission, PermissionItem
+from acmin.models import Permission, PermissionItem, Field
+from acmin.utils import param, json_response, attr
 from .form import AdminFormView
 
 
 class AdminUpdateView(AdminFormView, UpdateView):
     success_message = "更新成功!"
+
+    def get(self, request, *args, **kwargs):
+        partial, attribute, value = param(request, ["partial", "attribute", "value"])
+        pk = kwargs.get("pk")
+        if partial and attribute and value and pk:
+            instance = self.model.objects.filter(pk=pk).first()
+            python_type = attr(Field.get_field(self.request.user, self.model, attribute), "python_type")
+            if "django.db.models.fields.BooleanField" == python_type:
+                value = True if value == "true" else False
+            setattr(instance, attribute, value)
+            instance.save()
+            return json_response({"success": True})
+
+        return super().get(request, args, kwargs)
 
     def is_clone(self):
         return self.request.GET.get("clone") is not None

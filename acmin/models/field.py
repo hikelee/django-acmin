@@ -5,6 +5,7 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from filelock import FileLock
 
+from acmin.utils import first
 from .base import AcminModel
 from .contenttype import ContentType
 from .group import Group
@@ -57,7 +58,7 @@ class BaseField(AcminModel):
     field_contenttype = models.CharField(verbose_name="字段模型", max_length=100, null=True, blank=True)
     group_sequence = models.IntegerField("分组序号")
     sequence = models.IntegerField("序号")
-    python_type = models.CharField("原生类型",max_length=200)
+    python_type = models.CharField("原生类型", max_length=200)
 
     listable = models.BooleanField("在列表中显示", default=True)
     formable = models.BooleanField("在表单中显示", default=True)
@@ -65,6 +66,10 @@ class BaseField(AcminModel):
     exportable = models.BooleanField("可导出", default=True)
 
     verbose_name = models.CharField("显示名称", max_length=200)
+
+    @classmethod
+    def get_field(cls, user, model, attribute):
+        return first([field for field in get_all_fields()[user][model] if field.field_attribute == attribute])
 
     @classmethod
     def get_fields(cls, user, model):

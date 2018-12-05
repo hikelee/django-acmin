@@ -2,6 +2,7 @@
 {% load attr %}
 {% load truncate %}
 {% load display %}
+{% load resource %}
 {% block breadcrumb %}
     <ul class="breadcrumb">
         <li><a href="#!name=/{{ model_name }}">{{ model_verbose_name }}</a></li>
@@ -37,5 +38,9 @@
         {% block post-row %}{% endblock %}
     </div>
     {% block post-content %}{% endblock %}
+{% endblock %}
+
+{% block script %}
+    <script src="{% resource 'acmin/js/list.js?bbb' %}"></script>
 {% endblock %}
 

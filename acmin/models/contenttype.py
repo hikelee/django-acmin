@@ -46,7 +46,7 @@ class BaseContentType(AcminModel):
 
 class ContentType(BaseContentType):
     class Meta:
-        ordering = ['sequence']
+        ordering = ['sequence', "id"]
         verbose_name_plural = verbose_name = "模型"
         unique_together = (("app", "name"))
 
