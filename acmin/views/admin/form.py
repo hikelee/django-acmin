@@ -22,52 +22,44 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        self._add_relation_choices(context)
-
         context["model"] = self.model
         context["model_name"] = self.model.__name__
-
+        group_fields = Field.get_group_fields(self.request.user, self.model, contenttype=True, reverse=True)
+        context["group_fields_json"] = json.dumps([[{'attribute': field.field_attribute, "class": field.field_contenttype.split(".")[1]} for field in fields] for fields in group_fields])
+        self.add_foreign_field_choices(context["form"], attr(context, "object"), group_fields)
         return context
 
-    def _add_relation_choices(self, context):
-        user = self.request.user
-        obj = attr(context, "object")
-        form = context["form"]
+    def add_foreign_field_choices(self, form, obj, group_fields):
         choices = []
-        group_fields = Field.get_group_fields(user, self.model, contenttype=True, reverse=True)
-        context["group_fields"] = group_fields
-        group_array = []
-
         for foreign_fields in group_fields:
-            json_array = []
-            group_array.append(json_array)
             last_attribute, last_value = None, None
             for index in range(len(foreign_fields)):
                 field = foreign_fields[index]
                 cls = field.model
-                queryset = cls.objects
+                queryset = None
                 attribute = field.field_attribute
-                json_array.append({"attribute": attribute, "class": cls.__name__})
-                filters = Filter.get_filters_dict(self, self.request.user, cls) or {}
-                if last_attribute and last_value:
-                    filters[last_attribute[len(attribute) + 1:] + "_id"] = last_value
+                if index == 0 or last_value:
+                    queryset = cls.objects
+                    filters = Filter.get_filters_dict(self, self.request.user, cls) or {}
+                    if last_value:
+                        filters[last_attribute[len(attribute) + 1:] + "_id"] = last_value
 
-                if filters:
-                    queryset = queryset.filter(**filters)
+                    if filters:
+                        queryset = queryset.filter(**filters)
 
-                options = [(e.id, str(e)) for e in queryset.all()]
-                if len(options) > 1:
-                    options = [('', '-----')] + options
+                options = [(e.id, str(e)) for e in queryset.all()] if queryset else []
+                # if len(options) > 1:
+                options = [('', '------')] + options
+                value = attr(obj, f'{attribute}_id')
                 choices.append((attribute, ChoiceField(
                     required=True if form.fields.pop(attribute, False) else False,
-                    initial=attr(obj, "id"),
+                    initial=value,
                     label=field.verbose_name,
                     choices=options
                 )))
                 last_attribute = attribute
-                last_value = attr(obj, 'id')
+                last_value = value
 
         fields = OrderedDict(choices)
         fields.update(form.fields)
         form.fields = fields
-        context["group_fields_json"] = json.dumps(group_array)

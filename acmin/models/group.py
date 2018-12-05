@@ -10,4 +10,4 @@ class Group(AcminModel):
     name = models.CharField('名称', max_length=50)
 
     def __str__(self):
-        return self.name
+        return f"{self.name}({self.id})"
