@@ -1,14 +1,15 @@
+import json
 from collections import OrderedDict
 
 from django.contrib.messages.views import SuccessMessageMixin
 from django.forms import ChoiceField
 
-from acmin.models import Permission, PermissionItem, Filter
-from acmin.utils import attr, get_ancestor_attribute, get_ancestors, get_ancestors_names
-from .mixins import  ContextMixin, AccessMixin
+from acmin.models import Permission, PermissionItem, Filter, Field
+from acmin.utils import attr, get_ancestors
+from .mixins import ContextMixin, AccessMixin
 
 
-class AdminFormView(SuccessMessageMixin,  ContextMixin, AccessMixin):
+class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
 
     def post(self, request, *args, **kwargs):
         if Permission.has_permission(self.request.user, self.model, PermissionItem.savable):
@@ -49,34 +50,30 @@ class AdminFormView(SuccessMessageMixin,  ContextMixin, AccessMixin):
         return result
 
     def _add_relation_choices(self, context):
+        user = self.request.user
         obj = attr(context, "object")
         form = context["form"]
         choices = []
+        group_fields = Field.get_group_fields(user, self.model, contenttype=True, reverse=True)
+        context["group_fields"] = group_fields
+        group_array = []
 
-        chain_names = get_ancestors_names(self.model)
-        length = len(chain_names)
-        chains = get_ancestors(self.model)
-        removed_fields = self.get_removed_fields()
-        for index, (attribute, cls) in enumerate(chains):
-            if attribute not in removed_fields:
+        for foreign_fields in group_fields:
+            json_array = []
+            group_array.append(json_array)
+            last_attribute, last_value = None, None
+            for index in range(len(foreign_fields)):
+                field = foreign_fields[index]
+                cls = field.model
                 queryset = cls.objects
-                filters = Filter.get_filters_dict(self, self.request.user, cls)
+                attribute = field.field_attribute
+                json_array.append({"attribute": attribute, "class": cls.__name__})
+                filters = Filter.get_filters_dict(self, self.request.user, cls) or {}
+                if last_attribute and last_value:
+                    filters[last_attribute[len(attribute) + 1:] + "_id"] = last_value
+
                 if filters:
                     queryset = queryset.filter(**filters)
-
-                obj = attr(obj, attribute)
-                if obj and index < length - 1:
-                    parent_attribute_name = chain_names[index + 1]
-                    parent_id = attr(obj, parent_attribute_name + ".id")
-                    if parent_id:
-                        f = {parent_attribute_name + "_id": parent_id}
-                        queryset = queryset.filter(**f)
-                else:
-                    for c, f in filters:
-                        relation = get_ancestor_attribute(cls, c)
-                        if relation:
-                            f = {relation.replace(".", "__") + "__" + key: value for key, value in f.items()}
-                            queryset = queryset.filter(**f)
 
                 options = [(e.id, str(e)) for e in queryset.all()]
                 if len(options) > 1:
@@ -84,13 +81,13 @@ class AdminFormView(SuccessMessageMixin,  ContextMixin, AccessMixin):
                 choices.append((attribute, ChoiceField(
                     required=True if form.fields.pop(attribute, False) else False,
                     initial=attr(obj, "id"),
-                    label=attr(cls, '_meta.verbose_name'),
+                    label=field.verbose_name,
                     choices=options
                 )))
-        choices.reverse()
+                last_attribute = attribute
+                last_value = attr(obj, 'id')
 
         fields = OrderedDict(choices)
         fields.update(form.fields)
-        for f in removed_fields:
-            fields.pop(f, None)
         form.fields = fields
+        context["field_group"] = json.dumps(group_array)

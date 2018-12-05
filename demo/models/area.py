@@ -12,7 +12,8 @@ class Area(BaseModel):
         verbose_name = verbose_name_plural = "地区"
 
     city = models.ForeignKey(City, on_delete=models.CASCADE)
-    name = models.CharField("名称", max_length=50)
+    code = models.CharField("代码", max_length=10)
+    name = models.CharField("名称", max_length=150)
 
     def __str__(self):
         return self.name

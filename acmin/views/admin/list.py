@@ -4,15 +4,11 @@ from functools import reduce
 
 from django.db.models import Q
 from django.forms import ChoiceField, forms
-from django.forms.models import model_to_dict
-from django.http import JsonResponse
 from django.views import generic
 from django.views.generic.list import BaseListView
 
 from acmin.models import Permission, PermissionItem, Filter, Field
-from acmin.utils import (
-    attr, get_ancestors_names, get_model_field_names
-)
+from acmin.utils import attr, get_ancestors_names, get_model_field_names, param, json_response
 from acmin.utils import models as model_util
 from .mixins import ContextMixin, AccessMixin
 
@@ -136,17 +132,18 @@ class ToolbarSearchMixin(SearchMixin):
         return queryset
 
 
-class JsonResponseMixin(BaseListView):
+class ChoiceResponseMixin(BaseListView):
     def get(self, request, *args, **kwargs):
-        if self.request.GET.get("format") == 'json':
-            entities = [model_to_dict(item) for item in self.get_queryset()]
-            return JsonResponse(entities, safe=False)
-
+        choices, name, value = param(request, ["choices", "name", "value"])
+        if choices and name and value:
+            queryset = self.model.objects
+            queryset = queryset.filter(**{name.replace(".", "__") + "_id": int(value)})
+            return json_response([{"id": obj.id, "title": str(obj)} for obj in queryset.all()], safe=False)
         return super().get(request, args, kwargs)
 
 
 class AdminListView(
-    JsonResponseMixin,
+    ChoiceResponseMixin,
     FuzzySearchMixin,
     ToolbarSearchFormMixin,
     ToolbarSearchMixin,

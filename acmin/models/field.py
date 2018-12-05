@@ -77,7 +77,7 @@ class BaseField(AcminModel):
             return ContentType.get_model_by_key(self.field_contenttype)
 
     @classmethod
-    def get_group_fields(cls, user, model):
+    def get_group_fields(cls, user, model, contenttype=False, reverse=False):
         result = []
         group_sequence = -1
         fields = []
@@ -85,11 +85,12 @@ class BaseField(AcminModel):
             if group_sequence != field.group_sequence:
                 group_sequence = field.group_sequence
                 if fields:
-                    result.append(fields)
+                    result.append(list(reversed(fields)) if reverse else fields)
                 fields = []
-            fields.append(field)
+            if field.field_contenttype or not contenttype:
+                fields.append(field)
         if fields:
-            result.append(fields)
+            result.append(list(reversed(fields)) if reverse else fields)
         return result
 
     def __str__(self):

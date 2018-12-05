@@ -10,6 +10,7 @@ class Province(BaseModel):
         ordering = ['-id']
         verbose_name = verbose_name_plural = "省份"
 
+    code = models.CharField("代码", max_length=10)
     name = models.CharField("名称", max_length=50)
 
     def __str__(self):
