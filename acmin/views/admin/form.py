@@ -30,9 +30,6 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
         else:
             return self.handle_no_permission()
 
-    def get_removed_fields(self):
-        return []
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["model"] = self.model
