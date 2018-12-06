@@ -70,14 +70,15 @@ class ToolbarSearchFormMixin(SearchMixin):
                 cls = field.model
                 queryset = None
                 if index == 0:
-                    queryset = Filter.filter(cls.objects, self, cls)
+                    queryset = cls.objects
                 else:
                     last_attribute = fields[index - 1].attribute
                     last_value = params.get(last_attribute) or last_default_value
                     if last_value and last_options:
                         filters = {last_attribute[len(attribute) + 1:] + "_id": int(last_value)}
-                        queryset = Filter.filter(cls.objects.filter(**filters), self, cls)
+                        queryset = cls.objects.filter(**filters)
 
+                queryset = Filter.filter(queryset, self, cls)
                 options = [(e.id, str(e)) for e in queryset.all()] if queryset else []
                 label = field.verbose_name
                 if len(options) > 1:
@@ -129,6 +130,7 @@ class ChoiceResponseMixin(BaseListView):
             queryset = self.model.objects
             if value:
                 queryset = queryset.filter(**{attribute.replace(".", "__") + "_id": int(value)})
+            queryset = Filter.filter(queryset, self, self.model)
             return json_response([{"id": obj.id, "title": str(obj)} for obj in queryset.all()], safe=False)
         return super().get(request, args, kwargs)
 
@@ -174,4 +176,5 @@ class AdminListView(
         return Filter.filter(super().get_queryset(), self, self.model)
 
     def has_permission(self):
-        return Permission.has_permission(self.request.user, self.model, PermissionItem.listable)
+        item = PermissionItem.selectable if param(self.request, "choices") else PermissionItem.listable
+        return Permission.has_permission(self.request.user, self.model, item)

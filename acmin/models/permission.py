@@ -77,6 +77,7 @@ class PermissionItem:
     exportable = "exportable"
     viewable = "viewable"
     listable = "listable"
+    selectable = 'selectable'
 
 
 VALID_ITEMS = set([key for key, _ in vars(PermissionItem).items() if not key.startswith("_")])
@@ -95,6 +96,7 @@ class Permission(AcminModel):
     exportable = models.BooleanField("可导出", default=False)
     viewable = models.BooleanField("可查看", default=False)
     listable = models.BooleanField("可列表", default=False)
+    selectable = models.BooleanField("可选择", default=True)
 
     def to_instance_permission(self):
         return ModelPermission(

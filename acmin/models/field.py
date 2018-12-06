@@ -168,6 +168,7 @@ def get_attributes(cls, name=None):
 
 
 def init_fields(type_map):
+    Field.objects.all().delete()
     new = []
     for model in django.apps.apps.get_models():
         if issubclass(model, AcminModel):
@@ -183,6 +184,7 @@ def init_fields(type_map):
                 python_type = f"{field_type.__module__}.{field_type.__name__}"
                 attributes.append(attribute)
                 if attribute not in exists:
+                    editable = formable = attr(field, "editable") and attribute != "id"
                     new.append(Field(
                         base=base,
                         group_sequence=group_sequence,
@@ -190,7 +192,8 @@ def init_fields(type_map):
                         attribute=attribute,
                         verbose_name=verbose_name,
                         nullable=attr(field, "null"),
-                        editable=attr(field, "editable") and attribute != "id",
+                        editable=editable,
+                        formable=formable,
                         python_type=python_type,
                     ))
 
@@ -207,6 +210,7 @@ def init_fields(type_map):
                         cls = attr(field, f"remote_field.model")
 
                     if sub_attribute not in exists:
+                        editable = formable = attr(field, "editable")
                         new.append(Field(
                             base=base,
                             group_sequence=group_sequence,
@@ -215,7 +219,8 @@ def init_fields(type_map):
                             contenttype=type_map[cls],
                             verbose_name=verbose_name or attr(cls, "_meta.verbose_name"),
                             nullable=attr(field, "null"),
-                            editable=attr(field, "editable"),
+                            editable=editable,
+                            formable=formable,
                             python_type=ForeignKey.__module__ + "." + ForeignKey.__name__
                         ))
 

@@ -5,7 +5,7 @@ from django import forms
 from django.contrib.messages.views import SuccessMessageMixin
 from django.forms import ChoiceField
 
-from acmin.models import Permission, PermissionItem, Filter, Field
+from acmin.models import Permission, PermissionItem, Field, Filter
 from acmin.utils import attr
 from .mixins import ContextMixin, AccessMixin
 
@@ -51,13 +51,11 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
                 attribute = field.attribute
                 if index == 0 or last_value or last_field.nullable:
                     queryset = cls.objects
-                    filters = Filter.get_filters_dict(self, self.request.user, cls) or {}
                     if last_value:
-                        filters[last_field.attribute[len(attribute) + 1:] + "_id"] = last_value
-
-                    if filters:
+                        filters = {last_field.attribute[len(attribute) + 1:] + "_id": last_value}
                         queryset = queryset.filter(**filters)
 
+                queryset = Filter.filter(queryset, self, cls)
                 options = [(e.id, str(e)) for e in queryset.all()] if queryset else []
                 # if len(options) > 1:
                 options = [('', '------')] + options

@@ -8,6 +8,7 @@ from filelock import FileLock
 from acmin.utils import attr
 from .base import AcminModel
 from .contenttype import ContentType
+from .field import Field
 from .group import Group
 from .user import User
 
@@ -63,17 +64,26 @@ class Filter(AcminModel):
     def get_filters_dict(cls, view, user, model):
         result = {}
         for f in get_all_filters()[user][model]:
-            value = f.value
-            if f.value_type == FilterValueType.view_attribute:
-                value = attr(view, value)
+            value = cls.parse_value(view, f)
             if value is not None:
                 result[f.attribute] = value
         return result
 
     @classmethod
+    def parse_value(cls, view, f):
+        return attr(view, f.value) if f.value_type == FilterValueType.view_attribute else f.value
+
+    @classmethod
     def filter(cls, query, view, model):
         if query:
-            filters = cls.get_filters_dict(view, view.request.user, model)
+            user = view.request.user
+            filters = cls.get_filters_dict(view, user, model)
+            for fields in Field.get_group_fields(user, model, contenttype=True, reverse=True):
+                for field in fields:
+                    for f in get_all_filters()[user][field.model]:
+                        value = cls.parse_value(view, f)
+                        if value is not None:
+                            filters[f"{field.attribute.replace('.','__')}_{f.attribute}"] = value
             if filters:
                 query = query.filter(**filters)
         return query
