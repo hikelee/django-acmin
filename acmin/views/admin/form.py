@@ -25,24 +25,27 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
         context["model"] = self.model
         context["model_name"] = self.model.__name__
         group_fields = Field.get_group_fields(self.request.user, self.model, contenttype=True, reverse=True)
-        context["group_fields_json"] = json.dumps([[{'attribute': field.field_attribute, "class": field.field_contenttype.split(".")[1]} for field in fields] for fields in group_fields])
+        context["group_fields_json"] = json.dumps([[{'attribute': field.attribute, "class": field.contenttype.get_model().__name__} for field in fields] for fields in group_fields])
         self.add_foreign_field_choices(context["form"], attr(context, "object"), group_fields)
         return context
 
     def add_foreign_field_choices(self, form, obj, group_fields):
         choices = []
         for foreign_fields in group_fields:
-            last_attribute, last_value = None, None
+            last_field: Field = None
+            last_value = None
             for index in range(len(foreign_fields)):
                 field = foreign_fields[index]
                 cls = field.model
                 queryset = None
-                attribute = field.field_attribute
-                if index == 0 or last_value:
+                attribute = field.attribute
+                if last_field:
+                    print(vars(last_field))
+                if index == 0 or last_value or last_field.nullable:
                     queryset = cls.objects
                     filters = Filter.get_filters_dict(self, self.request.user, cls) or {}
                     if last_value:
-                        filters[last_attribute[len(attribute) + 1:] + "_id"] = last_value
+                        filters[last_field.attribute[len(attribute) + 1:] + "_id"] = last_value
 
                     if filters:
                         queryset = queryset.filter(**filters)
@@ -57,8 +60,9 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
                     label=field.verbose_name,
                     choices=options
                 )))
-                last_attribute = attribute
+
                 last_value = value
+                last_field = field
 
         fields = OrderedDict(choices)
         fields.update(form.fields)

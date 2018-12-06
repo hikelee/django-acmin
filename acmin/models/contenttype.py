@@ -35,8 +35,6 @@ class BaseContentType(AcminModel):
     class Meta:
         abstract = True
 
-    app = models.CharField("应用", max_length=100)
-    name = models.CharField("名称", max_length=100)
     verbose_name = models.CharField("描述", max_length=100)
     sequence = models.IntegerField("排序", default=100)
 
@@ -49,6 +47,9 @@ class ContentType(BaseContentType):
         ordering = ['sequence', "id"]
         verbose_name_plural = verbose_name = "模型"
         unique_together = (("app", "name"))
+
+    app = models.CharField("应用", max_length=100)
+    name = models.CharField("名称", max_length=100)
 
     @classmethod
     def get_by_model(cls, model):
@@ -73,15 +74,17 @@ class GroupContentType(BaseContentType):
     class Meta:
         ordering = ['group', 'sequence']
         verbose_name_plural = verbose_name = "模型(用户组)"
-        unique_together = ("group", "app", "name")
+        unique_together = ("group", "conenttype")
 
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    conenttype = models.ForeignKey(ContentType, on_delete=models.CASCADE)
 
 
 class UserContentType(BaseContentType):
     class Meta:
         ordering = ['user', 'sequence']
         verbose_name_plural = verbose_name = "模型(用户)"
-        unique_together = ("user", "app", "name")
+        unique_together = ("user", "conenttype")
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    conenttype = models.ForeignKey(ContentType, on_delete=models.CASCADE)

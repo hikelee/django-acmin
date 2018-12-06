@@ -44,19 +44,19 @@
                             <td style="color:{{ instance.css_color }}">
                                 {% block field-td %}
                                     {% if field.class_name and instance.instance_permission.viewable %}
-                                        {% with id=field.field_attribute|add:".id" %}
+                                        {% with id=field.attribute|add:".id" %}
                                             <a href="#!name=/{{ field.class_name }}/{{ instance|attr:id }}/">
-                                                {{ instance|display:field.field_attribute|truncate }}
+                                                {{ instance|display:field.attribute|truncate }}
                                             </a>
                                         {% endwith %}
                                     {% elif field.python_type == 'django.db.models.fields.BooleanField' %}
-                                        <input name="{{ field.field_attribute }}" type="checkbox" onchange="updateBoolAttribute('{{ model_name }}',{{ instance.id }},this)"
-                                                {% if instance|attr:field.field_attribute %}
+                                        <input name="{{ field.attribute }}" type="checkbox" onchange="updateBoolAttribute('{{ model_name }}',{{ instance.id }},this)"
+                                                {% if instance|attr:field.attribute %}
                                                checked
                                                 {% endif %}
                                         />
                                     {% else %}
-                                        {{ instance|display:field.field_attribute|truncate }}
+                                        {{ instance|display:field.attribute|truncate }}
                                     {% endif %}
                                 {% endblock %}
                             </td>

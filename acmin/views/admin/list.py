@@ -12,11 +12,11 @@ from .mixins import ContextMixin, AccessMixin
 
 class SearchMixin(BaseListView):
     def get_toolbar_search_params(self):
-        fields = [field.field_attribute for field in Field.get_fields(self.request.user, self.model)]
+        fields = [field.attribute for field in Field.get_fields(self.request.user, self.model)]
         return {k: v for k, v in self.request.GET.items() if k in fields and v}
 
     def get_request_model_filters(self):
-        fields = [field.field_attribute for field in Field.get_fields(self.request.user, self.model)]
+        fields = [field.attribute for field in Field.get_fields(self.request.user, self.model)]
         return {k: v for k, v in self.request.GET.items() if k in fields and v}
 
 
@@ -61,18 +61,18 @@ class ToolbarSearchFormMixin(SearchMixin):
         group_fields = Field.get_group_fields(self.request.user, self.model)
         params = self.get_toolbar_search_params()
         for fields in group_fields:
-            fields = [field for field in reversed(fields) if field.field_contenttype]
+            fields = [field for field in reversed(fields) if field.contenttype]
             last_options = None
             last_default_value = None
             for index in range(len(fields)):
                 field = fields[index]
-                attribute = field.field_attribute
+                attribute = field.attribute
                 cls = field.model
                 queryset = None
                 if index == 0:
                     queryset = Filter.filter(cls.objects, self, cls)
                 else:
-                    last_attribute = fields[index - 1].field_attribute
+                    last_attribute = fields[index - 1].attribute
                     last_value = params.get(last_attribute) or last_default_value
                     if last_value and last_options:
                         filters = {last_attribute[len(attribute) + 1:] + "_id": int(last_value)}
@@ -108,9 +108,9 @@ class ToolbarSearchMixin(SearchMixin):
         fields_group = Field.get_group_fields(self.request.user, self.model, contenttype=True)
         for fields in fields_group:
             for field in fields:
-                value = params.get(field.field_attribute, None)
+                value = params.get(field.attribute, None)
                 if value:
-                    queryset = queryset.filter(**{field.field_attribute.replace(".", "__") + "_id": value})
+                    queryset = queryset.filter(**{field.attribute.replace(".", "__") + "_id": value})
                     break
 
         sort = self.request.GET.get("sort")
@@ -123,9 +123,13 @@ class ToolbarSearchMixin(SearchMixin):
 class ChoiceResponseMixin(BaseListView):
     def get(self, request, *args, **kwargs):
         choices, attribute, value = param(request, ["choices", "attribute", "value"])
-        if choices and attribute and value:
+        from acmin.models import Field
+        field = Field.get_field(self.request.user, self.model, attribute)
+        print(attribute, field)
+        if choices and attribute and (value or field.nullable):
             queryset = self.model.objects
-            queryset = queryset.filter(**{attribute.replace(".", "__") + "_id": int(value)})
+            if value:
+                queryset = queryset.filter(**{attribute.replace(".", "__") + "_id": int(value)})
             return json_response([{"id": obj.id, "title": str(obj)} for obj in queryset.all()], safe=False)
         return super().get(request, args, kwargs)
 
@@ -145,10 +149,10 @@ class AdminListView(
     form_class = None
 
     def get_model_list_fields(self):
-        return [field for field in Field.get_fields(self.request.user, self.model) if field.listable and not field.field_contenttype]
+        return [field for field in Field.get_fields(self.request.user, self.model) if field.listable and not field.contenttype]
 
     def get_relation_fields(self):
-        fields = [field for field in Field.get_fields(self.request.user, self.model) if field.listable and field.field_contenttype]
+        fields = [field for field in Field.get_fields(self.request.user, self.model) if field.listable and field.contenttype]
         fields.reverse()
         return fields
 

@@ -45,36 +45,40 @@ def init_fields(type_map):
 
             fields = [field for field in attr(model, '_meta.fields') if not attr(field, "remote_field")]
             for sequence, field in enumerate(fields, start=1):
-                name, verbose_name = attr(field, "name"), attr(field, '_verbose_name')
-                attributes.append(name)
+                attribute, verbose_name = attr(field, "name"), attr(field, '_verbose_name')
+
+                attributes.append(attribute)
                 field_type = type(field)
                 python_type = f"{field_type.__module__}.{field_type.__name__}"
-                if not Field.objects.filter(base=base, field_attribute=name).first():
+                if not Field.objects.filter(base=base, attribute=attribute).first():
                     new.append(Field(
                         base=base,
-                        field_attribute=name,
+                        attribute=attribute,
                         group_sequence=group_sequence,
                         sequence=sequence,
                         verbose_name=verbose_name,
-                        python_type=python_type
+                        python_type=python_type,
+                        nullable=attr(field, "null"),
                     ))
 
             for group_sequence, fields in enumerate(get_foreing_fields_group(model), start=1):
                 for sequence, field in enumerate(fields, start=1):
                     contenttype = type_map.get(field.model)
                     attributes.append(field.attribute)
-                    if not Field.objects.filter(base=base, field_attribute=field.attribute).first():
+                    if not Field.objects.filter(base=base, attribute=field.attribute).first():
                         new.append(Field(
                             base=base,
-                            field_contenttype=f"{contenttype.app}.{contenttype.name}",
-                            field_attribute=field.attribute,
+                            attribute=field.attribute,
+                            contenttype=contenttype,
                             group_sequence=group_sequence,
                             sequence=sequence,
                             verbose_name=field.verbose_name,
-                            python_type=field.python_type
+                            python_type=field.python_type,
+                            nullable=field.nullable
                         ))
+                        print(base, field.attribute)
 
-            Field.objects.filter(base=base).exclude(field_attribute__in=attributes).delete()
+            Field.objects.filter(base=base).exclude(attribute__in=attributes).delete()
     Field.objects.bulk_create(new)
 
 
@@ -85,11 +89,12 @@ def init_models(sender, **kwargs):
 
 def get_foreing_fields_group(model):
     class Relation(object):
-        def __init__(self, model, attribute, verbose_name, python_type):
+        def __init__(self, model, attribute, verbose_name, python_type, nullable):
             self.model = model
             self.attribute = attribute
             self.verbose_name = verbose_name
             self.python_type = python_type
+            self.nullable = nullable
 
         def __repr__(self):
             return f"({self.model},{self.attribute},{self.verbose_name})"
@@ -136,7 +141,7 @@ def get_foreing_fields_group(model):
                 verbose_name = attr(cls, "_meta.verbose_name")
 
             field_type = type(field)
-            relation = Relation(cls, sub_attribute, verbose_name, f"{field_type.__module__}.{field_type.__name__}")
+            relation = Relation(cls, sub_attribute, verbose_name, f"{field_type.__module__}.{field_type.__name__}", attr(field, "null"))
             if not relations or sub_attribute.startswith(last_attribute):
                 relations.append(relation)
             elif relations:
