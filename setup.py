@@ -4,7 +4,7 @@ import os
 
 from setuptools import find_packages, setup
 
-version = "0.2.1"
+version = "0.2.2"
 
 with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'requirements.txt')) as f:
     required = f.read().splitlines()
