@@ -6,8 +6,6 @@ from .group import Group
 
 
 class User(AbstractUser, AcminModel):
-    list_fields = form_fields = search_fields = ['group', 'username', 'title']
-
     class Meta:
         verbose_name_plural = verbose_name = "用户"
 

@@ -49,8 +49,6 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
                 cls = field.model
                 queryset = None
                 attribute = field.attribute
-                if last_field:
-                    print(vars(last_field))
                 if index == 0 or last_value or last_field.nullable:
                     queryset = cls.objects
                     filters = Filter.get_filters_dict(self, self.request.user, cls) or {}

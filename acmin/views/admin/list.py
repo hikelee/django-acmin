@@ -125,7 +125,6 @@ class ChoiceResponseMixin(BaseListView):
         choices, attribute, value = param(request, ["choices", "attribute", "value"])
         from acmin.models import Field
         field = Field.get_field(self.request.user, self.model, attribute)
-        print(attribute, field)
         if choices and attribute and (value or field.nullable):
             queryset = self.model.objects
             if value:

@@ -7,7 +7,7 @@ from acmin.utils import get_ip, is_windows
 IS_PRODUCTION = socket.gethostname() in ['jn1', 'public']
 DEBUG = not IS_PRODUCTION
 # DEBUG = False
-ACMIN_ADMIN_PREFIX = ADMIN_PREFIX = "backend"
+ACMIN_ADMIN_PREFIX = ADMIN_PREFIX = "management"
 ACMIN_APP_NAME = APP_NAME = 'demo'
 ACMIN_SHOW_SQL = False
 ACMIN_ENABLE_CACHE = True

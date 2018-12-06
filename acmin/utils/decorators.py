@@ -26,24 +26,6 @@ def task(start=10, interval=60):
 
     return decorate
 
-
-'''
-cache_dict = {}
-def memorize(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        key = f"[{func.__name__}-{args}-{kwargs}]"
-        if key in cache_dict:
-            # print("get from cache:"+key)
-            return cache_dict[key]
-        result = func(*args, **kwargs)
-        cache_dict[key] = result
-        return result
-
-    return wrapper
-'''
-
-
 class memorize(dict):
     """
     Other version

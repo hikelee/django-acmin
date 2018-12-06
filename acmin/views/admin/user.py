@@ -1,3 +1,4 @@
+from django import forms
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth import REDIRECT_FIELD_NAME, logout
@@ -9,12 +10,16 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import FormView
 
+from acmin.forms import LoginForm
 from acmin.models import User
 from acmin.utils import attr
-from demo.forms.user import LoginForm, UserForm
+from .create import AdminCreateView
+from .update import AdminUpdateView
+
+app_name = __name__.split(".")[0]
 
 
-class FormMixin:
+class Mixin(object):
     model = User
 
     def form_valid(self, form):
@@ -26,12 +31,28 @@ class FormMixin:
         return super().form_valid(form)
 
     def get_form_class(self):
+        form_class = super().get_form_class()
+
+        class UserForm(form_class):
+            password1 = forms.CharField(label='修改密码', min_length=6, max_length=30, widget=forms.PasswordInput, required=False, help_text=u"如果需要更改密码,请直接填写. 否则就留空")
+            password2 = forms.CharField(label='确认密码', min_length=6, max_length=30, widget=forms.PasswordInput, required=False)
+
+            def clean_password2(self):
+                password1 = self.cleaned_data.get('password1')
+                password2 = self.cleaned_data.get('password2')
+                if password1 and len(password1) > 0 and password1 != password2:
+                    raise forms.ValidationError("两次密码输入不一致!")
+                return password2
+
         return UserForm
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["request"] = self.request
-        return kwargs
+
+class UserCreateView(Mixin, AdminCreateView):
+    pass
+
+
+class UserUpdateView(Mixin, AdminUpdateView):
+    pass
 
 
 class LoginView(FormView):

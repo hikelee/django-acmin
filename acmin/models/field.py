@@ -124,7 +124,6 @@ class Field(BaseField):
         if fields:
             fields.sort(key=lambda f: (f.group_sequence, f.sequence))
             result.append(list(reversed(fields)) if reverse else fields)
-        print(result)
         return result
 
 
