@@ -14,6 +14,36 @@ lock.release(force=True)
 cache = dict()
 
 
+def init_contenttype():
+    from acmin.models import ContentType, AcminModel
+    contenttypes = {}
+    for contenttype in ContentType.objects.all():
+        contenttypes[contenttype.app + "-" + contenttype.name] = contenttype
+    all_models = {}
+    for model in [model for model in django.apps.apps.get_models() if issubclass(model, AcminModel)]:
+        app = model.__module__.split(".")[0]
+        name = model.__name__
+        all_models[app + "-" + name] = model
+
+    type_map = {}
+    for flag, model in all_models.items():
+        contenttype = contenttypes.get(flag)
+        verbose_name = model._meta.verbose_name
+        if contenttype:
+            if contenttype.verbose_name != verbose_name:
+                contenttype.verbose_name = verbose_name
+                contenttype.save()
+        else:
+            app, name = flag.split("-")
+            contenttype = ContentType.objects.create(app=app, name=name, verbose_name=verbose_name)
+        type_map[model] = contenttype
+    for flag, contenttype in contenttypes.items():
+        if flag not in all_models:
+            contenttype.delete()
+
+    return type_map
+
+
 def get_map():
     if not cache:
         with lock:
