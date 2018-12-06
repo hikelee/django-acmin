@@ -20,7 +20,6 @@ def get_view(model, action):
     view = None
     try:
         view = import_class(f'{app_name}.views.{view_name}')
-        print(view)
     except:
         try:
             view = type("Dynamic%s" % view_name, (get_base_view_class(app_name, action),), dict(

@@ -65,7 +65,9 @@
         showDateTimePicker($(".datepicker"), 'YYYY-MM-DD');
         $('textarea').attr("rows", 3);
         {% autoescape off %}
-            addChangeEvent({{ group_fields_json }});
+            $().ready(function () {
+                addChangeEvent({{ group_fields_json }});
+            });
         {% endautoescape %}
     </script>
 {% endblock %}
