@@ -1,8 +1,11 @@
-function updateBoolAttribute(class_name, id, element) {
+function partialUpdate(class_name, id, element, isCheckbox) {
     let url = window.urlPrefix + "/" + class_name + "/" + id + "/";
-    let data = {attribute: element.name, value: element.checked, partial: true};
-    $.getJSON(url, data, function (result) {
+    let value = isCheckbox ? element.checked : element.value;
+    $.getJSON(url, {attribute: element.name, value: value, partial: true}, function (result) {
         console.log(result)
+        reloadContent();
     });
-    console.log(url, data)
 }
+
+
+

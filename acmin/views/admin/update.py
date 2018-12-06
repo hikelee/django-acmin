@@ -17,6 +17,7 @@ class AdminUpdateView(AdminFormView, UpdateView):
             python_type = attr(Field.get_field(self.request.user, self.model, attribute), "python_type")
             if "django.db.models.fields.BooleanField" == python_type:
                 value = True if value == "true" else False
+
             setattr(instance, attribute, value)
             instance.save()
             return json_response({"success": True})

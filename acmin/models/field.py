@@ -19,115 +19,6 @@ lock = FileLock("field.lock")
 lock.release(force=True)
 
 
-def init_fields(type_map):
-    from acmin.models import AcminModel, Field
-    new = []
-    for model in django.apps.apps.get_models():
-        if issubclass(model, AcminModel):
-            group_sequence = 100
-            base = type_map.get(model)
-            attributes = []
-
-            fields = [field for field in attr(model, '_meta.fields') if not attr(field, "remote_field")]
-            for sequence, field in enumerate(fields, start=1):
-                attribute, verbose_name = attr(field, "name"), attr(field, '_verbose_name')
-
-                attributes.append(attribute)
-                field_type = type(field)
-                python_type = f"{field_type.__module__}.{field_type.__name__}"
-                if not Field.objects.filter(base=base, attribute=attribute).first():
-                    new.append(Field(
-                        base=base,
-                        attribute=attribute,
-                        group_sequence=group_sequence,
-                        sequence=sequence,
-                        verbose_name=verbose_name,
-                        python_type=python_type,
-                        nullable=attr(field, "null"),
-
-                    ))
-
-            for group_sequence, fields in enumerate(get_foreing_fields_group(type_map, model), start=1):
-                for sequence, field in enumerate(fields, start=1):
-                    attributes.append(field.attribute)
-                    if not Field.objects.filter(base=field.base, attribute=field.attribute).first():
-                        new.append(Field(
-                            base=field.base,
-                            attribute=field.attribute,
-                            contenttype=field.contenttype,
-                            group_sequence=group_sequence,
-                            sequence=sequence,
-                            verbose_name=field.verbose_name,
-                            python_type=field.python_type,
-                            nullable=field.nullable
-                        ))
-
-            Field.objects.filter(base=base).exclude(attribute__in=attributes).delete()
-    Field.objects.bulk_create(new)
-
-
-def get_foreing_fields_group(type_map, model):
-    def get_relation1(cls):
-        relations = []
-        fields = attr(cls, '_meta.fields')
-        for field in fields:
-            remote_field = attr(field, "remote_field")
-            if remote_field:
-                related_model = attr(remote_field, "model")
-                field = attr(remote_field, "field")
-                if issubclass(type(field), ForeignKey):
-                    relations.append((related_model, attr(field, "name")))
-        return relations
-
-    def _get_attributes(cls, name=None):
-        relations = get_relation1(cls)
-        names = []
-        for relation_model, relation_attribute in relations:
-            new_name = f"{name}.{relation_attribute}" if name else relation_attribute
-            new_names = _get_attributes(relation_model, new_name)
-            if new_names:
-                names += new_names
-            else:
-                names.append(new_name)
-
-        return names
-
-    group, relations = [], []
-    last_attribute = None
-
-    attributes = _get_attributes(model)
-
-    for attribute in attributes:
-        names = attribute.split(".")
-        for i in range(1, len(names) + 1):
-            sub_attribute, cls, verbose_name, field = ".".join(names[0:i]), model, None, None
-            for name in sub_attribute.split("."):
-                field = attr(cls, f"{name}.field")
-                verbose_name = attr(field, "_verbose_name")
-                cls = attr(field, f"remote_field.model")
-            if not verbose_name:
-                verbose_name = attr(cls, "_meta.verbose_name")
-
-            relation = Field(
-                base=type_map[model],
-                attribute=sub_attribute,
-                contenttype=type_map[cls],
-                verbose_name=verbose_name,
-                nullable=attr(field, "null"),
-                editable=attr(field, "editable")
-            )
-            if not relations or sub_attribute.startswith(last_attribute):
-                relations.append(relation)
-            elif relations:
-                group.append(relations)
-                relations = [relation]
-            last_attribute = sub_attribute
-
-    if relations:
-        group.append(relations)
-    return group
-
-
 @receiver(post_save)
 @receiver(post_delete)
 def handle_model_change(sender, **kwargs):
@@ -225,12 +116,15 @@ class Field(BaseField):
             if group_sequence != field.group_sequence:
                 group_sequence = field.group_sequence
                 if fields:
+                    fields.sort(key=lambda f: (f.group_sequence, f.sequence))
                     result.append(list(reversed(fields)) if reverse else fields)
                 fields = []
             if field.contenttype or not contenttype:
                 fields.append(field)
         if fields:
+            fields.sort(key=lambda f: (f.group_sequence, f.sequence))
             result.append(list(reversed(fields)) if reverse else fields)
+        print(result)
         return result
 
 
@@ -258,3 +152,76 @@ class UserField(BaseField):
 
     def __str__(self):
         return f"{self.user},{self.verbose_name}({self.field.attribute})"
+
+
+def get_attributes(cls, name=None):
+    result = []
+    foreign_fields = [(attr(f, "remote_field.model"), attr(f, "remote_field.field.name")) for f in attr(cls, '_meta.fields') if issubclass(type(attr(f, "remote_field.field")), ForeignKey)]
+    for foreign_model, foreign_attribute in foreign_fields:
+        new_name = f"{name}.{foreign_attribute}" if name else foreign_attribute
+        new_names = get_attributes(foreign_model, new_name)
+        if new_names:
+            result += new_names
+        else:
+            result.append(new_name)
+
+    return result
+
+
+def init_fields(type_map):
+    new = []
+    for model in django.apps.apps.get_models():
+        if issubclass(model, AcminModel):
+            group_sequence = 100
+            base = type_map.get(model)
+            attributes = []
+            exists = set(f.attribute for f in Field.objects.filter(base=base).all())
+            fields = [field for field in attr(model, '_meta.fields') if not attr(field, "remote_field")]
+            for sequence, field in enumerate(fields, start=1):
+                attribute, verbose_name = attr(field, "name"), attr(field, '_verbose_name')
+                attributes.append(attribute)
+                field_type = type(field)
+                python_type = f"{field_type.__module__}.{field_type.__name__}"
+                attributes.append(attribute)
+                if attribute not in exists:
+                    new.append(Field(
+                        base=base,
+                        group_sequence=group_sequence,
+                        sequence=sequence,
+                        attribute=attribute,
+                        verbose_name=verbose_name,
+                        nullable=attr(field, "null"),
+                        editable=attr(field, "editable") and attribute != "id",
+                        python_type=python_type,
+                    ))
+
+            last_attribute, group_sequence = None, 0
+            for attribute in get_attributes(model):
+                names = attribute.split(".")
+                for sequence in range(1, len(names) + 1):
+                    sub_attribute, cls, verbose_name, field = ".".join(names[0:sequence]), model, None, None
+                    if last_attribute and not sub_attribute.startswith(last_attribute):
+                        group_sequence += 1
+                    for name in sub_attribute.split("."):
+                        field = attr(cls, f"{name}.field")
+                        verbose_name = attr(field, "_verbose_name")
+                        cls = attr(field, f"remote_field.model")
+
+                    if sub_attribute not in exists:
+                        new.append(Field(
+                            base=base,
+                            group_sequence=group_sequence,
+                            sequence=sequence - 1,
+                            attribute=sub_attribute,
+                            contenttype=type_map[cls],
+                            verbose_name=verbose_name or attr(cls, "_meta.verbose_name"),
+                            nullable=attr(field, "null"),
+                            editable=attr(field, "editable"),
+                            python_type=ForeignKey.__module__ + "." + ForeignKey.__name__
+                        ))
+
+                    attributes.append(sub_attribute)
+                    last_attribute = sub_attribute
+
+            Field.objects.filter(base=base).exclude(attribute__in=attributes).delete()
+    Field.objects.bulk_create(new)

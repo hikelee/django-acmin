@@ -1,6 +1,7 @@
 import json
 from collections import OrderedDict
 
+from django import forms
 from django.contrib.messages.views import SuccessMessageMixin
 from django.forms import ChoiceField
 
@@ -10,6 +11,18 @@ from .mixins import ContextMixin, AccessMixin
 
 
 class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
+
+    def get_form_class(self):
+        user = self.request.user
+        attributes = [field.attribute for field in Field.get_fields(user, self.model) if "." not in field.attribute and field.formable]
+        form = type(f"DynamicForm_Model_{self.model.__name__}_User_{user.id}", (forms.ModelForm,), dict(
+            Meta=type("Meta", (), dict(
+                model=self.model,
+                fields=attributes,
+            )),
+            __module__=__name__
+        ))
+        return form
 
     def post(self, request, *args, **kwargs):
         if Permission.has_permission(self.request.user, self.model, PermissionItem.savable):

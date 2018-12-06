@@ -49,12 +49,18 @@
                                                 {{ instance|display:field.attribute|truncate }}
                                             </a>
                                         {% endwith %}
-                                    {% elif field.python_type == 'django.db.models.fields.BooleanField' %}
-                                        <input name="{{ field.attribute }}" type="checkbox" onchange="updateBoolAttribute('{{ model_name }}',{{ instance.id }},this)"
+                                    {% elif field.python_type == 'django.db.models.fields.BooleanField' and field.editable %}
+                                        <input name="{{ field.attribute }}" type="checkbox" onchange="partialUpdate('{{ model_name }}',{{ instance.id }},this,true)"
                                                 {% if instance|attr:field.attribute %}
                                                checked
                                                 {% endif %}
                                         />
+                                    {% elif field.python_type == 'django.db.models.fields.IntegerField' and field.editable %}
+                                        <input class="ace" style="width:100px"
+                                               name="{{ field.attribute }}"
+                                               type="number"
+                                               onchange="partialUpdate('{{ model_name }}',{{ instance.id }},this)"
+                                               value="{{ instance|attr:field.attribute }}"/>
                                     {% else %}
                                         {{ instance|display:field.attribute|truncate }}
                                     {% endif %}

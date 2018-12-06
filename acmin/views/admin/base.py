@@ -2,8 +2,7 @@ import logging
 
 from django.conf import settings
 
-from acmin.forms import load_form
-from acmin.utils import attrs, memorize, import_class
+from acmin.utils import memorize, import_class
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +27,5 @@ def get_view(model, action):
             ))
         except Exception as e:
             logger.error(e)
-
-    if view and attrs.attr(view, 'form_class', None) is None:
-        setattr(view, "form_class", load_form(app_name, view.model))
 
     return view.as_view()
