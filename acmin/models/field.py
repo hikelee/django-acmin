@@ -168,7 +168,6 @@ def get_attributes(cls, name=None):
 
 
 def init_fields(type_map):
-    Field.objects.all().delete()
     new = []
     for model in django.apps.apps.get_models():
         if issubclass(model, AcminModel):
