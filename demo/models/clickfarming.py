@@ -1,22 +1,10 @@
 import datetime
 
+from acmin.models import User
 from django.db import models
 
-from acmin.models import User
 from .base import BaseModel
 from .platform import Platform
-
-
-class OrderStatus:
-    ongoing = 4
-    finished = 8
-    confirmed = 12
-
-    choices = (
-        (ongoing, "正在进行"),
-        (finished, "已经结束,等待确认"),
-        (confirmed, "已经确认"),
-    )
 
 
 class ClickFarming(BaseModel):
@@ -52,7 +40,7 @@ class ClickFarming(BaseModel):
     def instance_permission(self):
         result = super().instance_permission
         if self.reimbursed:
-            result.removable = result.cloneable = False
+            result.removable = result.cloneable = result.savable = False
         return result
 
     def css_color(self):
