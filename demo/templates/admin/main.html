@@ -2,7 +2,7 @@
 {% load resource %}
 {% block prescript %}
     <script type="text/javascript">
-        window.defaultNode = "/User";
+        window.defaultNode = "/{{default_node}}";
         window.urlPrefix = "{{ url_prefix }}";
     </script>
 {% endblock %}
