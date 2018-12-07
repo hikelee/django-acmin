@@ -44,6 +44,7 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
         for foreign_fields in group_fields:
             last_field: Field = None
             last_value = None
+            foreign_fields = [field for field in foreign_fields if field.attribute in form.fields or Permission.has_permission(self.request.user, field.model, PermissionItem.listable)]
             for index in range(len(foreign_fields)):
                 field = foreign_fields[index]
                 cls = field.model
@@ -57,8 +58,8 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
 
                 queryset = Filter.filter(queryset, self, cls)
                 options = [(e.id, str(e)) for e in queryset.all()] if queryset else []
-                # if len(options) > 1:
-                options = [('', '------')] + options
+                if len(options) > 1:
+                    options = [('', '------')] + options
                 value = attr(obj, f'{attribute}_id')
                 choices.append((attribute, ChoiceField(
                     required=True if form.fields.pop(attribute, False) else False,

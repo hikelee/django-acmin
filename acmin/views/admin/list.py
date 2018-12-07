@@ -151,11 +151,11 @@ class AdminListView(
     form_class = None
 
     def get_model_list_fields(self):
-        return [field for field in Field.get_fields(self.request.user, self.model) if field.listable and not field.contenttype]
+        return [field for field in Field.get_fields(self.request.user, self.model, has_contenttype=False) if field.listable]
 
     def get_relation_fields(self):
-
-        fields = [field for field in Field.get_fields(self.request.user, self.model) if field.listable and field.contenttype]
+        user = self.request.user
+        fields = [field for field in Field.get_fields(user, self.model, has_contenttype=True) if field.listable and Permission.has_permission(user, field.model, PermissionItem.listable)]
         fields.reverse()
         return fields
 
