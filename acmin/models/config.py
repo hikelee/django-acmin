@@ -50,7 +50,7 @@ class BaseConfig(AcminModel):
 
     @classmethod
     def get(cls, user, name, default=None):
-        return cache[user].get(name, default)
+        return get_configs()[user].get(name, default)
 
     @classmethod
     def get_int(cls, user, name, default=0):
