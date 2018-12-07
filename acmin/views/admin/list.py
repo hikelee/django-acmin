@@ -57,11 +57,12 @@ class ToolbarSearchFormMixin(SearchMixin):
         return []
 
     def get_toolbar_search_fields(self):
+        user = self.request.user
         choices = []
-        group_fields = Field.get_group_fields(self.request.user, self.model)
+        group_fields = Field.get_group_fields(user, self.model, has_contenttype=True)
         params = self.get_toolbar_search_params()
         for fields in group_fields:
-            fields = [field for field in reversed(fields) if field.contenttype]
+            fields = [field for field in reversed(fields) if Permission.has_permission(user, field.model, PermissionItem.selectable)]
             last_options = None
             last_default_value = None
             for index in range(len(fields)):
@@ -106,7 +107,7 @@ class ToolbarSearchMixin(SearchMixin):
     def get_queryset(self):
         queryset = super().get_queryset()
         params = self.get_toolbar_search_params()
-        fields_group = Field.get_group_fields(self.request.user, self.model, contenttype=True)
+        fields_group = Field.get_group_fields(self.request.user, self.model, has_contenttype=True)
         for fields in fields_group:
             for field in fields:
                 value = params.get(field.attribute, None)
@@ -153,6 +154,7 @@ class AdminListView(
         return [field for field in Field.get_fields(self.request.user, self.model) if field.listable and not field.contenttype]
 
     def get_relation_fields(self):
+
         fields = [field for field in Field.get_fields(self.request.user, self.model) if field.listable and field.contenttype]
         fields.reverse()
         return fields

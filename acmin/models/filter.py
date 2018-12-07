@@ -78,7 +78,7 @@ class Filter(AcminModel):
         if query:
             user = view.request.user
             filters = cls.get_filters_dict(view, user, model)
-            for fields in Field.get_group_fields(user, model, contenttype=True, reverse=True):
+            for fields in Field.get_group_fields(user, model, has_contenttype=True, reverse=True):
                 for field in fields:
                     for f in get_all_filters()[user][field.model]:
                         value = cls.parse_value(view, f)

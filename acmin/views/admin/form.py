@@ -34,7 +34,7 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
         context = super().get_context_data(**kwargs)
         context["model"] = self.model
         context["model_name"] = self.model.__name__
-        group_fields = Field.get_group_fields(self.request.user, self.model, contenttype=True, reverse=True)
+        group_fields = Field.get_group_fields(self.request.user, self.model, has_contenttype=True, reverse=True)
         context["group_fields_json"] = json.dumps([[{'attribute': field.attribute, "class": field.contenttype.get_model().__name__} for field in fields] for fields in group_fields])
         self.add_foreign_field_choices(context["form"], attr(context, "object"), group_fields)
         return context

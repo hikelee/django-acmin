@@ -95,8 +95,12 @@ class Field(BaseField):
         return first([field for field in get_all_fields()[user][model] if field.attribute == attribute])
 
     @classmethod
-    def get_fields(cls, user, model):
-        return get_all_fields()[user][model]
+    def get_fields(cls, user, model, has_contenttype=None):
+        result = []
+        for field in get_all_fields()[user][model]:
+            if has_contenttype is None or (has_contenttype is True and field.contenttype) or (has_contenttype is False and not field.contenttype):
+                result.append(field)
+        return result
 
     @property
     def model(self):
@@ -108,22 +112,24 @@ class Field(BaseField):
         return attr(self.model, "__name__")
 
     @classmethod
-    def get_group_fields(cls, user, model, contenttype=False, reverse=False):
+    def get_group_fields(cls, user, model, has_contenttype=None, reverse=False):
         result = []
         group_sequence = -1
         fields = []
-        for field in cls.get_fields(user, model):
+        for field in cls.get_fields(user, model, has_contenttype):
             if group_sequence != field.group_sequence:
                 group_sequence = field.group_sequence
                 if fields:
-                    fields.sort(key=lambda f: (f.group_sequence, f.sequence))
-                    result.append(list(reversed(fields)) if reverse else fields)
+                    result.append(fields)
                 fields = []
-            if field.contenttype or not contenttype:
-                fields.append(field)
+            fields.append(field)
         if fields:
-            fields.sort(key=lambda f: (f.group_sequence, f.sequence))
-            result.append(list(reversed(fields)) if reverse else fields)
+            result.append(fields)
+
+        for i in range(len(result)):
+            fields = sorted(result[i], key=lambda f: (f.group_sequence, f.sequence))
+            result[i] = list(reversed(fields)) if reverse else fields
+
         return result
 
 
