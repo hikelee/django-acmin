@@ -15,8 +15,12 @@ from .user import User
 
 cache = defaultdict(lambda: defaultdict(list))
 
+search_key_cache = defaultdict(lambda: defaultdict(list))
+
 lock = FileLock("field.lock")
+search_locker = FileLock("field-search.lock")
 lock.release(force=True)
+search_locker.release(force=True)
 
 
 @receiver(post_save)
@@ -25,6 +29,24 @@ def handle_model_change(sender, **kwargs):
     if sender in [Group, User, Field, UserField, GroupField]:
         with lock:
             cache.clear()
+            search_key_cache.clear()
+
+
+def get_all_search_attributes():
+    if not search_key_cache:
+        with search_locker:
+            for model in django.apps.apps.get_models():
+                if issubclass(model, AcminModel):
+                    for user in User.objects.all():
+                        for foreign_field in Field.get_fields(user, model, has_contenttype=True):
+                            for field in Field.get_fields(user, foreign_field.model, has_contenttype=False):
+                                if field.searchable:
+                                    search_key_cache[user][model].append(f"{foreign_field.attribute}.{field.attribute}")
+
+                        for field in Field.get_fields(user, model, has_contenttype=False):
+                            if field.searchable:
+                                search_key_cache[user][model].append(field.attribute)
+    return search_key_cache
 
 
 def get_all_fields():
@@ -72,6 +94,7 @@ class BaseField(AcminModel):
     unique = models.BooleanField("是否唯一性", default=False)
     default = models.CharField("默认值", max_length=500, null=True, blank=True)
     editable = models.BooleanField("可编辑", default=True)
+    searchable = models.BooleanField("可搜索", default=False)
     verbose_name = models.CharField("显示名称", max_length=200)
 
 
@@ -83,12 +106,17 @@ class Field(BaseField):
 
     base = models.ForeignKey(ContentType, on_delete=models.CASCADE, verbose_name="模型", related_name="base")
     attribute = models.CharField("字段名称", max_length=100)
-    contenttype = models.ForeignKey(ContentType, verbose_name="字段模型", null=True, blank=True, on_delete=models.CASCADE, related_name="contenttype")
+    contenttype = models.ForeignKey(ContentType, verbose_name="字段模型", null=True, blank=True, on_delete=models.CASCADE,
+                                    related_name="contenttype")
     group_sequence = models.IntegerField("分组序号")
     python_type = models.CharField("原生类型", max_length=200)
 
     def __str__(self):
         return f"{self.base},{self.verbose_name}({self.attribute})"
+
+    @classmethod
+    def get_search_attributes(cls, user, model):
+        return get_all_search_attributes()[user][model]
 
     @classmethod
     def get_field(cls, user, model, attribute):
@@ -98,7 +126,8 @@ class Field(BaseField):
     def get_fields(cls, user, model, has_contenttype=None):
         result = []
         for field in get_all_fields()[user][model]:
-            if has_contenttype is None or (has_contenttype is True and field.contenttype) or (has_contenttype is False and not field.contenttype):
+            if has_contenttype is None or (has_contenttype is True and field.contenttype) or (
+                    has_contenttype is False and not field.contenttype):
                 result.append(field)
         return result
 
@@ -161,7 +190,8 @@ class UserField(BaseField):
 
 def get_attributes(cls, name=None):
     result = []
-    foreign_fields = [(attr(f, "remote_field.model"), attr(f, "remote_field.field.name")) for f in attr(cls, '_meta.fields') if issubclass(type(attr(f, "remote_field.field")), ForeignKey)]
+    foreign_fields = [(attr(f, "remote_field.model"), attr(f, "remote_field.field.name")) for f in
+                      attr(cls, '_meta.fields') if issubclass(type(attr(f, "remote_field.field")), ForeignKey)]
     for foreign_model, foreign_attribute in foreign_fields:
         new_name = f"{name}.{foreign_attribute}" if name else foreign_attribute
         new_names = get_attributes(foreign_model, new_name)

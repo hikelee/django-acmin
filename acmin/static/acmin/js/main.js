@@ -205,7 +205,7 @@ var updateHashParam = function (paramsObj) {
 };
 
 var doSearch = function (input) {
-    updateHashParam({sk: input.value, page: 1})
+    updateHashParam({___fuzzy_search_key__: input.value, page: 1})
 };
 
 var sort = function (field) {

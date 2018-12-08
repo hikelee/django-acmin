@@ -6,7 +6,7 @@ from django.views import generic
 from django.views.generic.list import BaseListView
 
 from acmin.models import Permission, PermissionItem, Filter, Field
-from acmin.utils import attr, param, json_response
+from acmin.utils import param, json_response
 from .mixins import ContextMixin, AccessMixin
 
 
@@ -23,13 +23,13 @@ class SearchMixin(BaseListView):
 class FuzzySearchMixin(BaseListView):
     def get_queryset(self):
         queryset = super().get_queryset()
-        keyword = self.request.GET.get("sk")
+        keyword = self.request.GET.get("___fuzzy_search_key__")
         if keyword and len(keyword) > 0:
-            search_fields = attr(self.model, "search_fields")
-            if search_fields:
+            search_attributes = Field.get_search_attributes(self.request.user, self.model)
+            if search_attributes:
                 q = Q()
-                for field in search_fields:
-                    q = q | Q(**{'%s__icontains' % field: keyword})
+                for attribute in search_attributes:
+                    q = q | Q(**{f'{attribute.replace(".", "__")}__icontains': keyword})
                 queryset = queryset.filter(q)
 
         return queryset
@@ -62,7 +62,8 @@ class ToolbarSearchFormMixin(SearchMixin):
         group_fields = Field.get_group_fields(user, self.model, has_contenttype=True)
         params = self.get_toolbar_search_params()
         for fields in group_fields:
-            fields = [field for field in reversed(fields) if Permission.has_permission(user, field.model, PermissionItem.selectable)]
+            fields = [field for field in reversed(fields) if
+                      Permission.has_permission(user, field.model, PermissionItem.selectable)]
             last_options = None
             last_default_value = None
             for index in range(len(fields)):
@@ -85,7 +86,8 @@ class ToolbarSearchFormMixin(SearchMixin):
                 if len(options) > 1:
                     options = [('', '选择%s' % label)] + options
                 if options:
-                    choices.append((attribute, ChoiceField(initial=params.get(attribute, ""), label=label, choices=options, )))
+                    choices.append(
+                        (attribute, ChoiceField(initial=params.get(attribute, ""), label=label, choices=options, )))
 
                 last_default_value = options[0][0] if options else None
                 last_options = options
@@ -151,11 +153,13 @@ class AdminListView(
     form_class = None
 
     def get_model_list_fields(self):
-        return [field for field in Field.get_fields(self.request.user, self.model, has_contenttype=False) if field.listable]
+        return [field for field in Field.get_fields(self.request.user, self.model, has_contenttype=False) if
+                field.listable]
 
     def get_relation_fields(self):
         user = self.request.user
-        fields = [field for field in Field.get_fields(user, self.model, has_contenttype=True) if field.listable and Permission.has_permission(user, field.model, PermissionItem.listable)]
+        fields = [field for field in Field.get_fields(user, self.model, has_contenttype=True) if
+                  field.listable and Permission.has_permission(user, field.model, PermissionItem.listable)]
         fields.reverse()
         return fields
 
