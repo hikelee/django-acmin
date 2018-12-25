@@ -287,7 +287,7 @@ def init_fields(type_map):
                         max_length = attr(field, "max_length")
                         serialize = attr(field, "serialize")
                         help_text = attr(field, "help_text")
-                        editable = formable = attr(field, "editable")
+                        editable = formable = attr(field, "editable") and sub_attribute != "id"
                         python_type = ForeignKey.__module__ + "." + ForeignKey.__name__
                         new.append(Field(
                             base=base,

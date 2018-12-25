@@ -8,7 +8,7 @@ class FieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = Field
         # fields = '__all__'
-        exclude = ('base', 'contenttype', 'python_type')
+        exclude = ('base', 'contenttype', 'python_type', 'serialize')
         depth = 0
 
 
