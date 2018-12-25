@@ -139,6 +139,9 @@ class Field(BaseField):
     group_sequence = models.IntegerField("分组序号")
     python_type = models.CharField("原生类型", max_length=200)
     data_type = models.CharField("数据类型", max_length=10, null=True)
+    max_length = models.IntegerField("最大长度", null=True)
+    serialize = models.BooleanField("可序列化", null=True)
+    help_text = models.TextField("帮助文本", null=True)
 
     def __str__(self):
         return f"{self.base},{self.verbose_name}({self.attribute})"
@@ -243,6 +246,9 @@ def init_fields(type_map):
             fields = [field for field in attr(model, '_meta.fields') if not attr(field, "remote_field")]
             for sequence, field in enumerate(fields, start=1):
                 attribute, verbose_name = attr(field, "name"), attr(field, '_verbose_name')
+                max_length = attr(field, "max_length")
+                serialize = attr(field, "serialize")
+                help_text = attr(field, "help_text")
                 attributes.append(attribute)
                 field_type = type(field)
                 python_type = f"{field_type.__module__}.{field_type.__name__}"
@@ -259,7 +265,10 @@ def init_fields(type_map):
                         editable=editable,
                         formable=formable,
                         python_type=python_type,
-                        data_type=DATA_TYPES.get(python_type.split(".")[-1], "varchar")
+                        data_type=DATA_TYPES.get(python_type.split(".")[-1], "varchar"),
+                        max_length=max_length,
+                        serialize=serialize,
+                        help_text=help_text,
                     ))
 
             last_attribute, group_sequence = None, 0
@@ -275,6 +284,9 @@ def init_fields(type_map):
                         cls = attr(field, f"remote_field.model")
 
                     if sub_attribute not in exists:
+                        max_length = attr(field, "max_length")
+                        serialize = attr(field, "serialize")
+                        help_text = attr(field, "help_text")
                         editable = formable = attr(field, "editable")
                         python_type = ForeignKey.__module__ + "." + ForeignKey.__name__
                         new.append(Field(
@@ -289,6 +301,9 @@ def init_fields(type_map):
                             formable=formable,
                             python_type=python_type,
                             data_type=DATA_TYPES.get(python_type.split(".")[-1], "varchar"),
+                            max_length=max_length,
+                            serialize=serialize,
+                            help_text=help_text,
                         ))
 
                     attributes.append(sub_attribute)

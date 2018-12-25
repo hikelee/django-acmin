@@ -2,6 +2,8 @@ from django.db import models
 
 from .base import BaseModel
 
+2
+
 
 class Member(BaseModel):
     search_fields = ['name']
