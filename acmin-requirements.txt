@@ -3,4 +3,3 @@ requests
 python_utils
 xlwt
 filelock
-djangorestframework

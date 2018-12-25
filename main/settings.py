@@ -31,6 +31,19 @@ START_TIME = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 AUTH_USER_MODEL = f'acmin.User'
 LOGIN_URL = f'/{ADMIN_PREFIX}/{APP_NAME}/user/login/'
 INDEX_URL = f'/{ADMIN_PREFIX}/{APP_NAME}/'
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'acmin',
+    APP_NAME
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -106,17 +119,6 @@ def get_log_setting(debug):
     }
 
 
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'acmin',
-    APP_NAME
-]
-
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', },
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', },
@@ -162,3 +164,9 @@ LOGGING = get_log_setting(DEBUG)
 
 for folder in [LOG_FOLDER, MEDIA_ROOT]:
     os.makedirs(folder, exist_ok=True)
+
+# Django REST Framework
+REST_FRAMEWORK = {
+    'PAGE_SIZE': 10,
+    'DEFAULT_PAGINATION_CLASS': 'demo.pagination.Pagination',
+}

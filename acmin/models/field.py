@@ -85,6 +85,7 @@ class BaseField(AcminModel):
     class Meta:
         abstract = True
 
+    verbose_name = models.CharField("显示名称", max_length=200)
     sequence = models.IntegerField("序号")
     listable = models.BooleanField("在列表中显示", default=True)
     formable = models.BooleanField("在表单中显示", default=True)
@@ -95,7 +96,34 @@ class BaseField(AcminModel):
     default = models.CharField("默认值", max_length=500, null=True, blank=True)
     editable = models.BooleanField("可编辑", default=True)
     searchable = models.BooleanField("可搜索", default=False)
-    verbose_name = models.CharField("显示名称", max_length=200)
+
+
+DATA_TYPES = {
+    'AutoField': 'integer',
+    'BigAutoField': 'integer',
+    'BooleanField': 'boolean',
+    'CharField': 'varchar',
+    'DateField': 'date',
+    'DateTimeField': 'datetime',
+    'DecimalField': 'float',
+    'DurationField': 'integer',
+    'FileField': 'varchar',
+    'FilePathField': 'varchar',
+    'FloatField': 'float',
+    'IntegerField': 'integer',
+    'BigIntegerField': 'integer',
+    'IPAddressField': 'varchar',
+    'GenericIPAddressField': 'varchar',
+    'NullBooleanField': 'boolean',
+    'OneToOneField': 'integer',
+    'PositiveIntegerField': 'integer',
+    'PositiveSmallIntegerField': 'integer',
+    'SlugField': 'varchar',
+    'SmallIntegerField': 'smallint',
+    'TextField': 'text',
+    'TimeField': 'time',
+    'UUIDField': 'varchar',
+}
 
 
 class Field(BaseField):
@@ -110,6 +138,7 @@ class Field(BaseField):
                                     related_name="contenttype")
     group_sequence = models.IntegerField("分组序号")
     python_type = models.CharField("原生类型", max_length=200)
+    data_type = models.CharField("数据类型", max_length=10, null=True)
 
     def __str__(self):
         return f"{self.base},{self.verbose_name}({self.attribute})"
@@ -230,6 +259,7 @@ def init_fields(type_map):
                         editable=editable,
                         formable=formable,
                         python_type=python_type,
+                        data_type=DATA_TYPES.get(python_type.split(".")[-1], "varchar")
                     ))
 
             last_attribute, group_sequence = None, 0
@@ -246,6 +276,7 @@ def init_fields(type_map):
 
                     if sub_attribute not in exists:
                         editable = formable = attr(field, "editable")
+                        python_type = ForeignKey.__module__ + "." + ForeignKey.__name__
                         new.append(Field(
                             base=base,
                             group_sequence=group_sequence,
@@ -256,7 +287,8 @@ def init_fields(type_map):
                             nullable=attr(field, "null"),
                             editable=editable,
                             formable=formable,
-                            python_type=ForeignKey.__module__ + "." + ForeignKey.__name__
+                            python_type=python_type,
+                            data_type=DATA_TYPES.get(python_type.split(".")[-1], "varchar"),
                         ))
 
                     attributes.append(sub_attribute)
