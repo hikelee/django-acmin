@@ -22,10 +22,10 @@ models = [model for model in django.apps.apps.get_models() if
 
 def get_manual_patterns():
     urlpatterns = []
-    admin_prefix = attr(settings, 'ADMIN_PREFIX')
+    prefix = attr(settings, 'prefix')
     for model in models:
         name = model.__name__
-        prefix = f'{admin_prefix}/{app_name}/{name}'
+        prefix = f'{prefix}/{app_name}/{name}'
         view = partial(get_view, model)
         urlpatterns += [
             path(f'{prefix}/', view("list"), name=f'{name}-list'),
@@ -36,8 +36,8 @@ def get_manual_patterns():
         ]
 
     urlpatterns += [
-        path(f'{admin_prefix}/{app_name}/user/login/', user.LoginView.as_view(success_url='/'), kwargs={'authentication_form': LoginForm}),
-        path(f'{admin_prefix}/{app_name}/', main_index),
+        path(f'{prefix}/{app_name}/user/login/', user.LoginView.as_view(success_url='/'), kwargs={'authentication_form': LoginForm}),
+        path(f'{prefix}/{app_name}/', main_index),
 
     ]
 

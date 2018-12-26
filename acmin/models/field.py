@@ -96,7 +96,9 @@ class BaseField(AcminModel):
     default = models.CharField("默认值", max_length=500, null=True, blank=True)
     editable = models.BooleanField("可编辑", default=True)
     searchable = models.BooleanField("可搜索", default=False)
-
+    max_length = models.IntegerField("最大长度", null=True)
+    serialize = models.BooleanField("可序列化", null=True)
+    help_text = models.TextField("帮助文本", null=True)
 
 DATA_TYPES = {
     'AutoField': 'integer',
@@ -134,14 +136,11 @@ class Field(BaseField):
 
     base = models.ForeignKey(ContentType, on_delete=models.CASCADE, verbose_name="模型", related_name="base")
     attribute = models.CharField("字段名称", max_length=100)
-    contenttype = models.ForeignKey(ContentType, verbose_name="字段模型", null=True, blank=True, on_delete=models.CASCADE,
-                                    related_name="contenttype")
+    contenttype = models.ForeignKey(ContentType, verbose_name="字段模型", null=True, blank=True, on_delete=models.CASCADE, related_name="contenttype")
     group_sequence = models.IntegerField("分组序号")
     python_type = models.CharField("原生类型", max_length=200)
     data_type = models.CharField("数据类型", max_length=10, null=True)
-    max_length = models.IntegerField("最大长度", null=True)
-    serialize = models.BooleanField("可序列化", null=True)
-    help_text = models.TextField("帮助文本", null=True)
+
 
     def __str__(self):
         return f"{self.base},{self.verbose_name}({self.attribute})"
