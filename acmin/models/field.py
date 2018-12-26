@@ -100,6 +100,7 @@ class BaseField(AcminModel):
     serialize = models.BooleanField("可序列化", null=True)
     help_text = models.TextField("帮助文本", null=True)
 
+
 DATA_TYPES = {
     'AutoField': 'integer',
     'BigAutoField': 'integer',
@@ -136,11 +137,11 @@ class Field(BaseField):
 
     base = models.ForeignKey(ContentType, on_delete=models.CASCADE, verbose_name="模型", related_name="base")
     attribute = models.CharField("字段名称", max_length=100)
-    contenttype = models.ForeignKey(ContentType, verbose_name="字段模型", null=True, blank=True, on_delete=models.CASCADE, related_name="contenttype")
+    contenttype = models.ForeignKey(ContentType, verbose_name="字段模型", null=True, blank=True, on_delete=models.CASCADE,
+                                    related_name="contenttype")
     group_sequence = models.IntegerField("分组序号")
     python_type = models.CharField("原生类型", max_length=200)
     data_type = models.CharField("数据类型", max_length=10, null=True)
-
 
     def __str__(self):
         return f"{self.base},{self.verbose_name}({self.attribute})"
@@ -244,7 +245,10 @@ def init_fields(type_map):
             exists = set(f.attribute for f in Field.objects.filter(base=base).all())
             fields = [field for field in attr(model, '_meta.fields') if not attr(field, "remote_field")]
             for sequence, field in enumerate(fields, start=1):
+
                 attribute, verbose_name = attr(field, "name"), attr(field, '_verbose_name')
+                if attribute=="gender":
+                    print(attr(field,"choices"))
                 max_length = attr(field, "max_length")
                 serialize = attr(field, "serialize")
                 help_text = attr(field, "help_text")
@@ -259,7 +263,7 @@ def init_fields(type_map):
                         group_sequence=group_sequence,
                         sequence=sequence,
                         attribute=attribute,
-                        verbose_name=verbose_name,
+                        verbose_name=verbose_name or attribute,
                         nullable=attr(field, "null"),
                         editable=editable,
                         formable=formable,
@@ -294,7 +298,7 @@ def init_fields(type_map):
                             sequence=sequence - 1,
                             attribute=sub_attribute,
                             contenttype=type_map[cls],
-                            verbose_name=verbose_name or attr(cls, "_meta.verbose_name"),
+                            verbose_name=verbose_name or attr(cls, "_meta.verbose_name", attribute),
                             nullable=attr(field, "null"),
                             editable=editable,
                             formable=formable,

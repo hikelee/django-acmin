@@ -11,8 +11,8 @@ class FieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = Field
         # fields = '__all__'
-        exclude = ('base', 'contenttype', 'python_type', 'serialize')
-        depth = 0
+        exclude = ('base', 'python_type', 'serialize')
+        depth = 1
 
 
 class FieldViewSet(BaseViewSet):
@@ -25,14 +25,14 @@ class FieldViewSet(BaseViewSet):
 @login_required
 def get_meta(request):
     contenttype: ContentType = ContentType.get("demo", param(request, "type"))
-
     if contenttype:
         fields = Field.get_fields(request.user, contenttype.get_model(), )
-        print(contenttype.verbose_name, contenttype.name)
-        print(FieldSerializer(fields[0]).data)
         return json_response(dict(
             status=0,
-            type=dict(verbose_name=contenttype.verbose_name, name=contenttype.name),
+            type=dict(
+                verbose_name=contenttype.verbose_name,
+                name=contenttype.name
+            ),
             fields=[FieldSerializer(field).data for field in fields]
         ))
 
