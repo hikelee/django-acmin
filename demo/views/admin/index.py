@@ -31,11 +31,6 @@ def get_nodes(user):
 
 @login_required
 def index(request):
-    import django.apps
-    from acmin.utils import attr
-    for model in django.apps.apps.get_models():
-        for field in attr(model, '_meta.fields'):
-            print(vars(field))
     nodes, default_node = get_nodes(request.user)
     context = {
         "random": ''.join(random.sample(string.ascii_letters + string.digits, 8)),

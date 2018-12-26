@@ -52,7 +52,7 @@ def get_patterns():
     admin_patterns = get_manual_patterns()
     auto_patterns = get_urlpatterns()
     rest_patterns = [
-        path(f'restful/{app_name}/', include(router.urls)),
+        path(f'api/{app_name}/', include(router.urls)),
     ]
 
     return admin_patterns + auto_patterns + rest_patterns
