@@ -49,7 +49,8 @@ def get_map():
         with lock:
             contenttypes = {contenttype.get_key(): contenttype for contenttype in ContentType.objects.all()}
             cache['contenttypes'] = contenttypes
-            cache['models'] = {model.get_contenttype_key(): model for model in django.apps.apps.get_models() if issubclass(model, AcminModel)}
+            cache['models'] = {model.get_contenttype_key(): model for model in django.apps.apps.get_models() if
+                               issubclass(model, AcminModel)}
     return cache
 
 
@@ -80,6 +81,10 @@ class ContentType(BaseContentType):
 
     app = models.CharField("应用", max_length=100)
     name = models.CharField("名称", max_length=100)
+
+    @classmethod
+    def get(cls, app, name):
+        return cls.get_by_key(f"{app}.{name}")
 
     @classmethod
     def get_by_model(cls, model):
