@@ -41,11 +41,11 @@ def get_all_filters():
 
 class FilterValueType:
     constant = 10
-    view_attribute = 5
+    request_attribute = 5
 
     choices = [
         (constant, "固定值"),
-        (view_attribute, "视图属性"),
+        (request_attribute, "请求属性"),
     ]
 
 
@@ -61,27 +61,27 @@ class Filter(AcminModel):
     enabled = models.BooleanField("开通", default=True)
 
     @classmethod
-    def get_filters_dict(cls, view, user, model):
+    def get_filters_dict(cls, request, user, model):
         result = {}
         for f in get_all_filters()[user][model]:
-            value = cls.parse_value(view, f)
+            value = cls.parse_value(request, f)
             if value is not None:
                 result[f.attribute] = value
         return result
 
     @classmethod
-    def parse_value(cls, view, f):
-        return attr(view, f.value) if f.value_type == FilterValueType.view_attribute else f.value
+    def parse_value(cls, request, f):
+        return attr(request, f.value) if f.value_type == FilterValueType.request_attribute else f.value
 
     @classmethod
-    def filter(cls, query, view, model):
+    def filter(cls, query, request, model):
         if query:
-            user = view.request.user
-            filters = cls.get_filters_dict(view, user, model)
+            user = request.user
+            filters = cls.get_filters_dict(request, user, model)
             for fields in Field.get_group_fields(user, model, has_contenttype=True, reverse=True):
                 for field in fields:
                     for f in get_all_filters()[user][field.model]:
-                        value = cls.parse_value(view, f)
+                        value = cls.parse_value(request, f)
                         if value is not None:
                             filters[f"{field.attribute.replace('.','__')}_{f.attribute}"] = value
             if filters:

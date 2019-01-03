@@ -174,7 +174,7 @@ class Field(BaseField, CommonField):
 
     @classmethod
     def get_default_field(cls, model, attribute):
-        return get_default_fields()[model][attribute]
+        return get_default_fields()[model].get(attribute)
 
     @classmethod
     def get_search_attributes(cls, user, model):

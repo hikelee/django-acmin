@@ -56,7 +56,7 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
                         filters = {last_field.attribute[len(attribute) + 1:] + "_id": last_value}
                         queryset = queryset.filter(**filters)
 
-                queryset = Filter.filter(queryset, self, cls)
+                queryset = Filter.filter(queryset, self.request, cls)
                 options = [(e.id, str(e)) for e in queryset.all()] if queryset else []
                 if len(options) > 1:
                     options = [('', '------')] + options
