@@ -154,7 +154,7 @@ CACHES = {
 
 SQLITE_DATABASE = {'default': {
     'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': F"{BASE_DIR}/app1.db",
+    'NAME': F"{BASE_DIR}/app.db",
     'TEST_NAME': F"{BASE_DIR}/app-test.db",
 }}
 

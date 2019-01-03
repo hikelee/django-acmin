@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models import ForeignKey
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
+from django_bulk_update.helper import bulk_update
 from filelock import FileLock
 
 from acmin.utils import first, attr
@@ -81,7 +82,7 @@ def get_all_fields():
     return cache
 
 
-class BaseField(AcminModel):
+class CommonField(AcminModel):
     class Meta:
         abstract = True
 
@@ -96,8 +97,6 @@ class BaseField(AcminModel):
     default = models.CharField("默认值", max_length=500, null=True, blank=True)
     editable = models.BooleanField("可编辑", default=True)
     searchable = models.BooleanField("可搜索", default=False)
-    max_length = models.IntegerField("最大长度", null=True)
-    serialize = models.BooleanField("可序列化", null=True)
     help_text = models.TextField("帮助文本", null=True)
 
 
@@ -129,19 +128,28 @@ DATA_TYPES = {
 }
 
 
-class Field(BaseField):
+class BaseField(AcminModel):
+    """
+    These Fields cannot be changed
+    """
+
     class Meta:
-        ordering = ['base', 'group_sequence', 'sequence']
-        verbose_name_plural = verbose_name = "字段"
-        # unique_together = (("base", "attribute"))
+        abstract = True
 
     base = models.ForeignKey(ContentType, on_delete=models.CASCADE, verbose_name="模型", related_name="base")
     attribute = models.CharField("字段名称", max_length=100)
-    contenttype = models.ForeignKey(ContentType, verbose_name="字段模型", null=True, blank=True, on_delete=models.CASCADE,
-                                    related_name="contenttype")
+    contenttype = models.ForeignKey(ContentType, verbose_name="字段模型", null=True, blank=True, on_delete=models.CASCADE, related_name="contenttype")
     group_sequence = models.IntegerField("分组序号")
     python_type = models.CharField("原生类型", max_length=200)
     data_type = models.CharField("数据类型", max_length=10, null=True)
+    max_length = models.IntegerField("最大长度", null=True)
+    serialize = models.BooleanField("可序列化", null=True)
+
+
+class Field(BaseField, CommonField):
+    class Meta:
+        ordering = ['base', 'group_sequence', 'sequence']
+        verbose_name_plural = verbose_name = "字段"
 
     def __str__(self):
         return f"{self.base},{self.verbose_name}({self.attribute})"
@@ -194,7 +202,7 @@ class Field(BaseField):
         return result
 
 
-class GroupField(BaseField):
+class GroupField(CommonField):
     class Meta:
         ordering = ["group", 'field']
         verbose_name_plural = verbose_name = "字段(用户组)"
@@ -207,7 +215,7 @@ class GroupField(BaseField):
         return f"{self.group},{self.verbose_name}({self.field.attribute})"
 
 
-class UserField(BaseField):
+class UserField(CommonField):
     class Meta:
         ordering = ["user", 'field']
         verbose_name_plural = verbose_name = "字段(用户)"
@@ -236,43 +244,53 @@ def get_attributes(cls, name=None):
 
 
 def init_fields(type_map):
+    basic_fields = [f.name for f in attr(BaseField, '_meta.fields')]
     new = []
+    updates = []
     for model in django.apps.apps.get_models():
         if issubclass(model, AcminModel):
             group_sequence = 100
             base = type_map.get(model)
             attributes = []
-            exists = set(f.attribute for f in Field.objects.filter(base=base).all())
+            exists = {f.attribute: f for f in Field.objects.filter(base=base).all()}
+
+            def check(field):
+                exists_field = exists.get(field.attribute)
+                if exists_field:
+                    need_update = False
+                    for key in basic_fields:
+                        if attr(field, key) != attr(exists_field, key):
+                            setattr(exists_field, key, attr(field, key))
+                            need_update = True
+                    if need_update:
+                        updates.append(exists_field)
+                else:
+                    new.append(field)
+
             fields = [field for field in attr(model, '_meta.fields') if not attr(field, "remote_field")]
             for sequence, field in enumerate(fields, start=1):
-
-                attribute, verbose_name = attr(field, "name"), attr(field, '_verbose_name')
-                if attribute=="gender":
-                    print(attr(field,"choices"))
-                max_length = attr(field, "max_length")
-                serialize = attr(field, "serialize")
-                help_text = attr(field, "help_text")
+                attribute = attr(field, "name")
+                verbose_name = attr(field, '_verbose_name') or attribute
                 attributes.append(attribute)
                 field_type = type(field)
                 python_type = f"{field_type.__module__}.{field_type.__name__}"
-                attributes.append(attribute)
-                if attribute not in exists:
-                    editable = formable = attr(field, "editable") and attribute != "id"
-                    new.append(Field(
-                        base=base,
-                        group_sequence=group_sequence,
-                        sequence=sequence,
-                        attribute=attribute,
-                        verbose_name=verbose_name or attribute,
-                        nullable=attr(field, "null"),
-                        editable=editable,
-                        formable=formable,
-                        python_type=python_type,
-                        data_type=DATA_TYPES.get(python_type.split(".")[-1], "varchar"),
-                        max_length=max_length,
-                        serialize=serialize,
-                        help_text=help_text,
-                    ))
+                editable = formable = attr(field, "editable") and attribute != "id"
+                check(Field(
+                    base=base,
+                    attribute=attribute,
+                    contenttype=None,
+                    group_sequence=group_sequence,
+                    python_type=python_type,
+                    data_type=DATA_TYPES.get(python_type.split(".")[-1], "varchar"),
+                    max_length=attr(field, "max_length"),
+                    serialize=attr(field, "serialize"),
+                    sequence=sequence,
+                    verbose_name=verbose_name,
+                    nullable=attr(field, "null"),
+                    editable=editable,
+                    formable=formable,
+                    help_text=attr(field, "help_text"),
+                ))
 
             last_attribute, group_sequence = None, 0
             for attribute in get_attributes(model):
@@ -285,32 +303,27 @@ def init_fields(type_map):
                         field = attr(cls, f"{name}.field")
                         verbose_name = attr(field, "_verbose_name")
                         cls = attr(field, f"remote_field.model")
-
-                    if sub_attribute not in exists:
-                        max_length = attr(field, "max_length")
-                        serialize = attr(field, "serialize")
-                        help_text = attr(field, "help_text")
-                        editable = formable = attr(field, "editable") and sub_attribute != "id"
-                        python_type = ForeignKey.__module__ + "." + ForeignKey.__name__
-                        new.append(Field(
-                            base=base,
-                            group_sequence=group_sequence,
-                            sequence=sequence - 1,
-                            attribute=sub_attribute,
-                            contenttype=type_map[cls],
-                            verbose_name=verbose_name or attr(cls, "_meta.verbose_name", attribute),
-                            nullable=attr(field, "null"),
-                            editable=editable,
-                            formable=formable,
-                            python_type=python_type,
-                            data_type=DATA_TYPES.get(python_type.split(".")[-1], "varchar"),
-                            max_length=max_length,
-                            serialize=serialize,
-                            help_text=help_text,
-                        ))
-
+                    editable = formable = attr(field, "editable") and sub_attribute != "id"
+                    python_type = ForeignKey.__module__ + "." + ForeignKey.__name__
+                    check(Field(
+                        base=base,
+                        group_sequence=group_sequence,
+                        sequence=sequence - 1,
+                        attribute=sub_attribute,
+                        contenttype=type_map[cls],
+                        verbose_name=verbose_name or attr(cls, "_meta.verbose_name") or sub_attribute,
+                        nullable=attr(field, "null"),
+                        editable=editable,
+                        formable=formable,
+                        python_type=python_type,
+                        data_type=DATA_TYPES.get(python_type.split(".")[-1], "varchar"),
+                        max_length=attr(field, "max_length"),
+                        serialize=attr(field, "serialize"),
+                        help_text=attr(field, "help_text"),
+                    ))
                     attributes.append(sub_attribute)
                     last_attribute = sub_attribute
 
             Field.objects.filter(base=base).exclude(attribute__in=attributes).delete()
     Field.objects.bulk_create(new)
+    bulk_update(updates, update_fields=basic_fields)
