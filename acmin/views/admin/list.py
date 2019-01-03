@@ -62,8 +62,7 @@ class ToolbarSearchFormMixin(SearchMixin):
         group_fields = Field.get_group_fields(user, self.model, has_contenttype=True)
         params = self.get_toolbar_search_params()
         for fields in group_fields:
-            fields = [field for field in reversed(fields) if
-                      Permission.has_permission(user, field.model, PermissionItem.selectable)]
+            fields = [field for field in reversed(fields) if field.filterable]
             last_options = None
             last_default_value = None
             for index in range(len(fields)):

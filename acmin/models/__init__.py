@@ -1,4 +1,5 @@
 from .base import AcminModel
+from .choice import Choice
 from .config import Config, UserConfig, GroupConfig
 from .contenttype import ContentType
 from .field import Field, GroupField, UserField, CommonField

@@ -18,9 +18,8 @@ cache = defaultdict(lambda: defaultdict(list))
 
 search_key_cache = defaultdict(lambda: defaultdict(list))
 
-lock = FileLock("field.lock")
 search_locker = FileLock("field-search.lock")
-lock.release(force=True)
+
 search_locker.release(force=True)
 
 
@@ -48,6 +47,24 @@ def get_all_search_attributes():
                             if field.searchable:
                                 search_key_cache[user][model].append(field.attribute)
     return search_key_cache
+
+
+default_field_cache = defaultdict(dict)
+default_field_lock = FileLock("default_field_lock.lock")
+default_field_lock.release(force=True)
+
+
+def get_default_fields():
+    if not default_field_cache:
+        with default_field_lock:
+            for field in Field.objects.all():
+                model = field.base.get_model()
+                default_field_cache[model][field.attribute] = field
+    return default_field_cache
+
+
+lock = FileLock("field.lock")
+lock.release(force=True)
 
 
 def get_all_fields():
@@ -97,6 +114,7 @@ class CommonField(AcminModel):
     default = models.CharField("默认值", max_length=500, null=True, blank=True)
     editable = models.BooleanField("可编辑", default=True)
     searchable = models.BooleanField("可搜索", default=False)
+    filterable = models.BooleanField("可过滤", default=True)
     help_text = models.TextField("帮助文本", null=True)
 
 
@@ -153,6 +171,10 @@ class Field(BaseField, CommonField):
 
     def __str__(self):
         return f"{self.base},{self.verbose_name}({self.attribute})"
+
+    @classmethod
+    def get_default_field(cls, model, attribute):
+        return get_default_fields()[model][attribute]
 
     @classmethod
     def get_search_attributes(cls, user, model):

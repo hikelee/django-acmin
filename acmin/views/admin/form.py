@@ -44,7 +44,7 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
         for foreign_fields in group_fields:
             last_field: Field = None
             last_value = None
-            foreign_fields = [field for field in foreign_fields if field.attribute in form.fields or Permission.has_permission(self.request.user, field.model, PermissionItem.listable)]
+            foreign_fields = [field for field in foreign_fields if field.formable]
             for index in range(len(foreign_fields)):
                 field = foreign_fields[index]
                 cls = field.model
