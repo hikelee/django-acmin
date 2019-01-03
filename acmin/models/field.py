@@ -330,7 +330,7 @@ def init_fields(type_map):
                     check(Field(
                         base=base,
                         group_sequence=group_sequence,
-                        sequence=sequence - 1,
+                        sequence=len(names) - sequence,
                         attribute=sub_attribute,
                         contenttype=type_map[cls],
                         verbose_name=verbose_name or attr(cls, "_meta.verbose_name") or sub_attribute,

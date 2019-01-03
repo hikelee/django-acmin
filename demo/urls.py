@@ -11,7 +11,7 @@ from acmin.utils import attr
 from acmin.views import get_urlpatterns
 from acmin.views.admin import get_view
 from acmin.views.admin import user
-from demo.views import rest
+from demo.views import api
 from demo.views.admin import index as main_index
 
 app_name = __name__.split(".")[0]
@@ -46,8 +46,8 @@ def get_manual_patterns():
 
 def get_patterns():
     router = DefaultRouter()
-    router.register(r'members', rest.MemberViewSet)
-    router.register(r'fields', rest.FieldViewSet)
+    router.register(r'members', api.MemberViewSet)
+    router.register(r'fields', api.FieldViewSet)
 
     admin_patterns = get_manual_patterns()
     auto_patterns = get_urlpatterns()

@@ -32,6 +32,21 @@ def init_choices():
             Choice.objects.bulk_create(news)
 
 
+cache_lock = FileLock("choice_cache.lock")
+cache_lock.release(force=True)
+
+cache = collections.defaultdict(list)
+
+
+def get_choices():
+    if not cache:
+        with cache_lock:
+            for choice in Choice.objects.all():
+                cache[choice.field].append(choice)
+
+    return cache
+
+
 class Choice(AcminModel):
     class Meta:
         ordering = ['field', "id"]
@@ -41,6 +56,10 @@ class Choice(AcminModel):
     field = models.ForeignKey(Field, on_delete=models.CASCADE, verbose_name="默认字段")
     value = models.CharField("值", max_length=100)
     title = models.CharField("标题", max_length=100)
+
+    @classmethod
+    def get_choices(cls, field):
+        return get_choices()[field]
 
     def __str__(self):
         return f"{self.field.attribute},{self.value},{self.title}"

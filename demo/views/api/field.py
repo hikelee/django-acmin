@@ -1,7 +1,9 @@
+import collections
+
 from django.contrib.auth.decorators import login_required
 from rest_framework import serializers
 
-from acmin.models import Field, ContentType
+from acmin.models import Field, ContentType, Choice
 from acmin.utils import param, json_response
 from acmin.views import route
 from .base import BaseViewSet
@@ -20,20 +22,22 @@ class FieldViewSet(BaseViewSet):
     serializer_class = FieldSerializer
 
 
-# http://127.0.0.1:7000/api/demo/meta/?type=Member
+# http://127.0.0.1:8000/api/demo/meta/?type=Member
 @route("api/demo/meta/")
 @login_required
 def get_meta(request):
     contenttype: ContentType = ContentType.get("demo", param(request, "type"))
     if contenttype:
-        fields = Field.get_fields(request.user, contenttype.get_model(), )
+        fields = Field.get_fields(request.user, contenttype.get_model())
+        choices = collections.defaultdict(collections.OrderedDict)
+        for field in fields:
+            for choice in Choice.get_choices(field):
+                choices[field.attribute][choice.value] = choice.title
         return json_response(dict(
             status=0,
-            type=dict(
-                verbose_name=contenttype.verbose_name,
-                name=contenttype.name
-            ),
-            fields=[FieldSerializer(field).data for field in fields]
+            type=dict(verbose_name=contenttype.verbose_name, name=contenttype.name),
+            fields=[FieldSerializer(field).data for field in fields],
+            choices=choices,
         ))
 
     return json_response(dict(status=1))

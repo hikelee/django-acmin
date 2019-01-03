@@ -62,7 +62,7 @@ class ToolbarSearchFormMixin(SearchMixin):
         group_fields = Field.get_group_fields(user, self.model, has_contenttype=True)
         params = self.get_toolbar_search_params()
         for fields in group_fields:
-            fields = [field for field in reversed(fields) if field.filterable]
+            fields = [field for field in  fields  if field.filterable]
             last_options = None
             last_default_value = None
             for index in range(len(fields)):
@@ -159,7 +159,6 @@ class AdminListView(
         user = self.request.user
         fields = [field for field in Field.get_fields(user, self.model, has_contenttype=True) if
                   field.listable and Permission.has_permission(user, field.model, PermissionItem.listable)]
-        fields.reverse()
         return fields
 
     def get_list_fields(self):
