@@ -23,7 +23,7 @@ class FieldViewSet(BaseViewSet):
 
 
 # http://127.0.0.1:8000/api/demo/meta/?type=Member
-@route("api/demo/meta/")
+@route("api/demo/fields/")
 @login_required
 def get_meta(request):
     contenttype: ContentType = ContentType.get("demo", param(request, "type"))
