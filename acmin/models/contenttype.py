@@ -98,6 +98,7 @@ class ContentType(BaseContentType):
 
     @classmethod
     def get_by_key(cls, key):
+        print(key)
         return get_map()['contenttypes'][key]
 
     @classmethod

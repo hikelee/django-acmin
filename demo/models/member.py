@@ -19,7 +19,7 @@ class Member(BaseModel):
         verbose_name = verbose_name_plural = "会员"
 
     name = models.CharField("名称", max_length=50)
-    gender = models.SmallIntegerField(choices=Gender.chocies, default=Gender.woman)
+    gender = models.SmallIntegerField("性别", choices=Gender.chocies, default=Gender.woman)
 
     def __str__(self):
         return self.name

@@ -115,34 +115,34 @@ class CommonField(AcminModel):
     editable = models.BooleanField("可编辑", default=True)
     searchable = models.BooleanField("可搜索", default=False)
     filterable = models.BooleanField("可过滤", default=True)
-    help_text = models.TextField("帮助文本", null=True)
+    help_text = models.TextField("帮助文本", null=True, blank=True)
 
 
 DATA_TYPES = {
     'AutoField': 'integer',
     'BigAutoField': 'integer',
     'BooleanField': 'boolean',
-    'CharField': 'varchar',
+    'CharField': 'string',
     'DateField': 'date',
     'DateTimeField': 'datetime',
     'DecimalField': 'float',
     'DurationField': 'integer',
-    'FileField': 'varchar',
-    'FilePathField': 'varchar',
+    'FileField': 'string',
+    'FilePathField': 'string',
     'FloatField': 'float',
     'IntegerField': 'integer',
     'BigIntegerField': 'integer',
-    'IPAddressField': 'varchar',
-    'GenericIPAddressField': 'varchar',
+    'IPAddressField': 'string',
+    'GenericIPAddressField': 'string',
     'NullBooleanField': 'boolean',
     'OneToOneField': 'integer',
     'PositiveIntegerField': 'integer',
     'PositiveSmallIntegerField': 'integer',
-    'SlugField': 'varchar',
+    'SlugField': 'string',
     'SmallIntegerField': 'smallint',
     'TextField': 'text',
     'TimeField': 'time',
-    'UUIDField': 'varchar',
+    'UUIDField': 'string',
 }
 
 
@@ -159,9 +159,9 @@ class BaseField(AcminModel):
     contenttype = models.ForeignKey(ContentType, verbose_name="字段模型", null=True, blank=True, on_delete=models.CASCADE, related_name="contenttype")
     group_sequence = models.IntegerField("分组序号")
     python_type = models.CharField("原生类型", max_length=200)
-    data_type = models.CharField("数据类型", max_length=10, null=True)
-    max_length = models.IntegerField("最大长度", null=True)
-    serialize = models.BooleanField("可序列化", null=True)
+    data_type = models.CharField("数据类型", max_length=10, null=True, blank=True)
+    max_length = models.IntegerField("最大长度", null=True, blank=True)
+    serialize = models.BooleanField("可序列化", null=True, blank=True)
 
 
 class Field(BaseField, CommonField):
@@ -286,8 +286,14 @@ def init_fields(type_map):
                             need_update = True
                     if need_update:
                         updates.append(exists_field)
+                        if len(updates) > 50:
+                            bulk_update(updates, update_fields=basic_fields)
+                            updates.clear()
                 else:
                     new.append(field)
+                    if len(new) > 50:
+                        Field.objects.bulk_create(new)
+                        new.clear()
 
             fields = [field for field in attr(model, '_meta.fields') if not attr(field, "remote_field")]
             for sequence, field in enumerate(fields, start=1):
@@ -303,7 +309,7 @@ def init_fields(type_map):
                     contenttype=None,
                     group_sequence=group_sequence,
                     python_type=python_type,
-                    data_type=DATA_TYPES.get(python_type.split(".")[-1], "varchar"),
+                    data_type=DATA_TYPES.get(python_type.split(".")[-1], "string"),
                     max_length=attr(field, "max_length"),
                     serialize=attr(field, "serialize"),
                     sequence=sequence,
@@ -338,7 +344,7 @@ def init_fields(type_map):
                         editable=editable,
                         formable=formable,
                         python_type=python_type,
-                        data_type=DATA_TYPES.get(python_type.split(".")[-1], "varchar"),
+                        data_type=DATA_TYPES.get(python_type.split(".")[-1], "string"),
                         max_length=attr(field, "max_length"),
                         serialize=attr(field, "serialize"),
                         help_text=attr(field, "help_text"),

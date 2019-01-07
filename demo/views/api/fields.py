@@ -26,7 +26,7 @@ class FieldViewSet(BaseViewSet):
 @route("api/demo/fields/")
 @login_required
 def get_meta(request):
-    contenttype: ContentType = ContentType.get("demo", param(request, "type"))
+    contenttype: ContentType = ContentType.get("demo", param(request, "model"))
     if contenttype:
         fields = Field.get_fields(request.user, contenttype.get_model())
         choices = collections.defaultdict(collections.OrderedDict)
@@ -35,7 +35,7 @@ def get_meta(request):
                 choices[field.attribute][choice.value] = choice.title
         return json_response(dict(
             status=0,
-            type=dict(verbose_name=contenttype.verbose_name, name=contenttype.name),
+            type=dict(label=contenttype.verbose_name, name=contenttype.name),
             fields=[FieldSerializer(field).data for field in fields],
             choices=choices,
         ))
