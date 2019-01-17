@@ -22,8 +22,8 @@ class FieldViewSet(BaseViewSet):
     serializer_class = FieldSerializer
 
 
-# http://127.0.0.1:8000/api/demo/meta/?type=Member
-@route("api/demo/fields/")
+# http://127.0.0.1:7000/api/demo/meta/?model=Member
+@route("api/demo/meta/")
 @login_required
 def get_meta(request):
     contenttype: ContentType = ContentType.get("demo", param(request, "model"))
