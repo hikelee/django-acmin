@@ -29,14 +29,34 @@ def route(path, prefix=""):
         new_path = prefix + path
         if new_path.startswith("/"):
             new_path = new_path[1:]
-        methods[new_path] = func
 
         @wraps(func)
         def wrapper(*args, **kwargs):
             result = func(*args, **kwargs)
             return result
 
-        return wrapper
+        methods[new_path] = wrapper
+
+    return decorate
+
+
+def api_route(path, login_required=True):
+    def decorate(func):
+        new_path = path
+        if new_path.startswith("/"):
+            new_path = new_path[1:]
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if not login_required or args[0].user.is_authenticated:
+                result = func(*args, **kwargs)
+                if type(result) is not dict:
+                    return HttpResponse(status=500, content="Result is not a dict obj")
+                return json_response(func(*args, **kwargs))
+            else:
+                return HttpResponse(status=401)
+
+        methods[new_path] = wrapper
 
     return decorate
 
