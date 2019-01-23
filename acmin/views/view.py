@@ -1,92 +1,11 @@
-import json
-from functools import wraps
 from inspect import isfunction
 
-from django.conf import settings
 from django.http import HttpResponse
-from django.urls import path as django_patb
-from django.views.decorators.csrf import csrf_exempt
 
+from acmin.router import route
 from acmin.utils import *
 
 methods = {}
-
-
-def get_urlpatterns():
-    return [
-        django_patb(r, get_view(func), name=f"{func.__module__}.{func.__qualname__}")
-        for r, func in methods.items()
-    ]
-
-
-def admin_route(path):
-    from django.conf import settings
-    return route(path, f"{settings.ACMIN_ADMIN_PREFIX}/{settings.ACMIN_APP_NAME}" or "")
-
-
-def route(path, prefix=""):
-    def decorate(func):
-        new_path = prefix + path
-        if new_path.startswith("/"):
-            new_path = new_path[1:]
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
-            return result
-
-        methods[new_path] = wrapper
-
-    return decorate
-
-
-def api_route(path, login_required=True):
-    def decorate(func):
-        new_path = path
-        if new_path.startswith("/"):
-            new_path = new_path[1:]
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            if not login_required or args[0].user.is_authenticated:
-                result = func(*args, **kwargs)
-                if type(result) is not dict:
-                    return HttpResponse(status=500, content="Result is not a dict obj")
-                return json_response(func(*args, **kwargs))
-            else:
-                return HttpResponse(status=401)
-
-        methods[new_path] = wrapper
-
-    return decorate
-
-
-def get_view(func):
-    qualname = func.__qualname__
-    module_name = func.__module__
-    cls = None
-    if "." in qualname:
-        class_name, _ = qualname.split(".")
-        cls = import_class("%s.%s" % (module_name, class_name))
-
-        @csrf_exempt
-        def view(request, *args, **kwargs):
-            obj = cls()
-            obj.request = request
-            obj.args = args
-            obj.kwargs = kwargs
-            return func(obj, *args, **kwargs)
-    else:
-        def view(request, *args, **kwargs):
-            return func(request, *args, **kwargs)
-
-    return view
-
-
-class Result(object):
-    def __init__(self, status=1, data=None):
-        self.status = status
-        self.data = data
 
 
 def to_json(data, fields):
@@ -154,24 +73,6 @@ class AcminView(metaclass=RouteMeta):
             obj['data'] = data
         return cls.json_response(obj)
 
-    @classmethod
-    def ok_list_json(cls, obj_list, include_fields=[], exclude_fields=[]):
-        fields = include_fields
-        if obj_list and not fields:  # obj_list 必须为真    fields必须为假    obj_list and not fields 此表达式才为真
-            fields = [f for f in get_model_fields_without_relation(obj_list[0].__class__) if f not in exclude_fields]
-        return cls.json_response({"status": 0, "data": to_json(obj_list, fields)})
-
-    @classmethod
-    def ok_object_json(cls, obj, include_fields=[], exclude_fields=[]):
-        if obj:
-            fields = include_fields or []
-            if not fields:
-                fields = [f for f in get_model_fields_without_relation(obj.__class__) if f not in exclude_fields]
-
-            return cls.json_response({"status": 0, "data": to_json(obj, fields)})
-        else:
-            return cls.json_response({"status": 1})
-
     def int_param(self, param_name, default=0) -> int:
         return int_param(self.request, param_name, default)
 
@@ -183,9 +84,6 @@ class AcminView(metaclass=RouteMeta):
 
     def mac(self):
         return (self.param("mac", "") or self.param("imei", "")).upper()
-
-    def file_json_response(self, file):
-        return self.json_response(load_json(file))
 
 
 class ApiView(AcminView):
@@ -210,9 +108,3 @@ def url(param=None):
             return get_wrapper(func)
 
         return decorate
-
-
-def load_json(file):
-    base = settings.BASE_DIR
-    with open(f"{base}/data/{file}", 'r', encoding="UTF-8") as load_f:
-        return json.load(load_f)

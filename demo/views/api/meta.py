@@ -3,8 +3,8 @@ import collections
 from rest_framework import serializers
 
 from acmin.models import Field, ContentType, Choice
+from acmin.router import api_route
 from acmin.utils import param
-from acmin.views import api_route
 from .base import BaseViewSet
 
 
@@ -32,10 +32,13 @@ def get_meta(request):
             for choice in Choice.get_choices(field):
                 choices[field.attribute][choice.value] = choice.title
         return dict(
-            status=0,
-            type=dict(label=contenttype.verbose_name, name=contenttype.name),
-            fields=[FieldSerializer(field).data for field in fields],
-            choices=choices,
+            status=200,
+            message="success",
+            data=dict(
+                type=dict(label=contenttype.verbose_name, name=contenttype.name),
+                fields=[FieldSerializer(field).data for field in fields],
+                choices=choices,
+            )
         )
 
     return dict(status=1)

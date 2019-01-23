@@ -2,7 +2,7 @@ import json
 
 from django.contrib.auth import authenticate, login, logout
 
-from acmin.views import api_route
+from acmin.router import api_route
 
 
 @api_route("api/demo/auth/logout/")

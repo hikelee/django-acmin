@@ -1,16 +1,18 @@
-from rest_framework import serializers
+import logging
 
 from demo.models import Member
-from .base import BaseViewSet
+from .base import BaseViewSet, BaseSerializer
+
+logger = logging.getLogger(__name__)
 
 
-class MemberSerializer(serializers.HyperlinkedModelSerializer):
-    # create_time = serializers.DateTimeField(label="加入时间", format="%Y-%m-%d %H:%M:%S", required=False, read_only=False)
+class MemberSerializer(BaseSerializer):
     class Meta:
         model = Member
-        fields = ('id', 'name')
 
 
 class MemberViewSet(BaseViewSet):
-    queryset = Member.objects.all()
-    serializer_class = MemberSerializer
+    class Meta:
+        model = Member
+
+

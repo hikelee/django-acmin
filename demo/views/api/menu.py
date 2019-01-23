@@ -1,5 +1,5 @@
+from acmin.router import route
 from acmin.utils import json_response
-from acmin.views import route
 
 breadcrumb_data = {
     '/generic/list/': {

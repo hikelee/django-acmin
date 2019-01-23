@@ -4,3 +4,4 @@ python_utils
 xlwt
 filelock
 django-bulk-update
+djangorestframework

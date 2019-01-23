@@ -1,8 +1,8 @@
 from django.contrib.auth.decorators import login_required
 
 from acmin.models import ContentType, Filter, Field
+from acmin.router import route
 from acmin.utils import param, json_response, int_param
-from acmin.views import route
 
 
 # http://127.0.0.1:8000/api/demo/choices/?attribute=city.province&type=City&parent=2
