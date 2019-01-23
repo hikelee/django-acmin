@@ -1,6 +1,7 @@
 import logging
 
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from acmin.serializer import get_serializer
@@ -42,19 +43,21 @@ class BaseViewSet(viewsets.ModelViewSet):
             )))
 
 
-def get_viewset(model_class):
+class AuthenticatedBaseViewSet(BaseViewSet):
+    permission_classes = (IsAuthenticated,)
+
+
+def get_viewset(model_class, login_required=True):
     app_name = model_class.__module__.split(".")[0]
     name = f"{model_class.__name__}ViewSet"
     module = f'{app_name}.views'
     try:
         return import_class(f'{module}.{name}')
     except(ImportError, AttributeError, Exception):
-        try:
-            return type(f"Dynamic{name}", (BaseViewSet,), dict(
-                Meta=type("Meta", (), dict(
-                    model=model_class
-                )),
-                __module__=module,
-            ))
-        except Exception as e:
-            logger.error(e)
+        super_class = AuthenticatedBaseViewSet if login_required else BaseViewSet
+        return type(f"Dynamic{name}", (super_class,), dict(
+            Meta=type("Meta", (), dict(
+                model=model_class
+            )),
+            __module__=module,
+        ))
