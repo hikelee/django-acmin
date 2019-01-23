@@ -31,7 +31,7 @@ def get_serializer(model_class):
     module = f'{app_name}.serializer'
     try:
         return import_class(f'{module}.{name}')
-    except ImportError:
+    except (ImportError, AttributeError, Exception):
         try:
             return type(f"Dynamic{name}", (BaseSerializer,), dict(
                 Meta=type("Meta", (), dict(model=model_class)),

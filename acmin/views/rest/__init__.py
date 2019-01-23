@@ -48,7 +48,7 @@ def get_viewset(model_class):
     module = f'{app_name}.views'
     try:
         return import_class(f'{module}.{name}')
-    except(ImportError, AttributeError):
+    except(ImportError, AttributeError, Exception):
         try:
             return type(f"Dynamic{name}", (BaseViewSet,), dict(
                 Meta=type("Meta", (), dict(
