@@ -1,45 +1,12 @@
 import logging
 
-from rest_framework import viewsets, serializers
+from rest_framework import viewsets
 from rest_framework.response import Response
 
-from acmin.models import Field
+from acmin.serializer import get_serializer
 from acmin.utils import import_class, attr
 
 logger = logging.getLogger(__name__)
-
-
-class BaseSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = None
-
-    def get_fields(self):
-        fields = super().get_fields()
-        return fields
-
-    def get_field_names(self, declared_fields, info):
-        request = attr(self, "_context.request")
-        model = attr(self.Meta, "model")
-        fields = Field.get_fields(request.user, model)
-        names = [field.attribute for field in fields]
-
-        return names
-
-
-def find_serializer(model_class):
-    app_name = model_class.__module__.split(".")[0]
-    name = f"{model_class.__name__}Serializer"
-    module = f'{app_name}.serializer'
-    try:
-        return import_class(f'{module}.{name}')
-    except ImportError:
-        try:
-            return type(f"Dynamic{name}", (BaseSerializer,), dict(
-                Meta=type("Meta", (), dict(model=model_class)),
-                __module__=module,
-            ))
-        except Exception as e:
-            logger.error(e)
 
 
 class BaseViewSet(viewsets.ModelViewSet):
@@ -47,8 +14,7 @@ class BaseViewSet(viewsets.ModelViewSet):
         model = None
 
     def get_serializer_class(self):
-        result = find_serializer(self.Meta.model)
-        print(result)
+        result = get_serializer(self.Meta.model)
         return result
 
     def get_serializer_context(self):
@@ -76,13 +42,13 @@ class BaseViewSet(viewsets.ModelViewSet):
             )))
 
 
-def find_viewset(model_class):
+def get_viewset(model_class):
     app_name = model_class.__module__.split(".")[0]
     name = f"{model_class.__name__}ViewSet"
     module = f'{app_name}.views'
     try:
         return import_class(f'{module}.{name}')
-    except ImportError:
+    except(ImportError, AttributeError):
         try:
             return type(f"Dynamic{name}", (BaseViewSet,), dict(
                 Meta=type("Meta", (), dict(

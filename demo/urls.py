@@ -8,9 +8,8 @@ from django.urls import path
 from acmin.forms import LoginForm
 from acmin.router import get_urlpatterns
 from acmin.utils import attr
-from acmin.views.admin import get_view
-from acmin.views.admin import user
-from demo.views import api
+from acmin.views import get_viewset
+from acmin.views.admin import get_view, user
 from demo.views.admin import index as main_index
 from demo.views.api.router import Router
 
@@ -44,20 +43,18 @@ def get_admin_patterns():
     return urlpatterns
 
 
-def get_api_patterns():
+def get_rest_patterns():
+    router = Router()
     for model in models:
-        name = model.__name__
+        viewset = get_viewset(model)
+        router.register(model.__name__, viewset)
+    return [path(f'api/{app_name}/', include(router.urls))]
 
 
 def get_patterns():
-    router = Router()
-    router.register(r'members', api.MemberViewSet)
-    # router.register(r'fields', api.FieldViewSet)
+    get_rest_patterns()
 
     admin_patterns = get_admin_patterns()
     auto_patterns = get_urlpatterns()
-    rest_patterns = [
-        path(f'api/{app_name}/', include(router.urls)),
-    ]
 
-    return admin_patterns + auto_patterns + rest_patterns
+    return admin_patterns + auto_patterns + get_rest_patterns()

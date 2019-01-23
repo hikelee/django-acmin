@@ -1,24 +1,16 @@
 import collections
 
-from rest_framework import serializers
-
 from acmin.models import Field, ContentType, Choice
 from acmin.router import api_route
+from acmin.serializer import BaseSerializer
 from acmin.utils import param
-from .base import BaseViewSet
 
 
-class FieldSerializer(serializers.ModelSerializer):
+class FieldSerializer(BaseSerializer):
     class Meta:
         model = Field
-        # fields = '__all__'
         exclude = ('base', 'python_type', 'serialize')
         depth = 1
-
-
-class FieldViewSet(BaseViewSet):
-    queryset = Field.objects.all()
-    serializer_class = FieldSerializer
 
 
 # http://127.0.0.1:7000/api/demo/meta/?model=Member
