@@ -12,11 +12,16 @@ class BaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = None
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def get_fields(self):
         fields = super().get_fields()
         return fields
 
     def get_field_names(self, declared_fields, info):
+        # print(vars(self))
+        # print(info)
         request = attr(self, "_context.request")
         model = attr(self.Meta, "model")
         fields = Field.get_fields(request.user, model)

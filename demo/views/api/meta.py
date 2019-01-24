@@ -28,7 +28,7 @@ def get_meta(request):
             message="success",
             data=dict(
                 type=dict(label=contenttype.verbose_name, name=contenttype.name),
-                fields=[FieldSerializer(field).data for field in fields],
+                fields=[FieldSerializer(field, context=dict(request=request)).data for field in fields],
                 choices=choices,
             )
         )

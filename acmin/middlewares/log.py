@@ -43,7 +43,7 @@ class LogMiddleware(MiddlewareMixin):
         # logger.info(bytes(message,"GBK").decode("UTF-8"))
         try:
             logger.info(message)
-        except:
+        except (UnicodeEncodeError, Exception):
             pass
         return response
 

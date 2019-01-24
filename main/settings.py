@@ -98,6 +98,7 @@ def file_handler(name):
         'level': 'DEBUG',
         'filters': ['f1'],
         'formatter': 'simple',
+        'encoding': 'utf8',
         'class': 'logging.FileHandler',
         'filename': f'{LOG_FOLDER}/{name}.log',
     }

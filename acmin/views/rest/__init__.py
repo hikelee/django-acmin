@@ -4,6 +4,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from acmin.models import Permission, PermissionItem
 from acmin.serializer import get_serializer
 from acmin.utils import import_class, attr
 
@@ -34,17 +35,26 @@ class BaseViewSet(viewsets.ModelViewSet):
         paginator = self.paginator.page.paginator
         count = paginator.count
         return Response(dict(
-            list=data,
-            pagination=dict(
-                total=count,
-                pageSize=paginator.per_page,
-                pages=paginator.num_pages,
-                current=int(self.request.GET.get("page", 1))
-            )))
+            data=(dict(list=data, total=count)),
+            status=200,
+            message="success"
+            # list=data,
+            # pagination=dict(
+            #    total=count,
+            #    pageSize=paginator.per_page,
+            #    pages=paginator.num_pages,
+            #    current=int(self.request.GET.get("page", 1))
+
+        ))
+
+
+class ViewPermission(IsAuthenticated):
+    def has_permission(self, request, view):
+        return super().has_permission(request, view) and Permission.has_permission(request.user, view.Meta.model, PermissionItem.listable)
 
 
 class AuthenticatedBaseViewSet(BaseViewSet):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (ViewPermission,)
 
 
 def get_viewset(model_class, login_required=True):
