@@ -1,12 +1,13 @@
 import logging
 
 from rest_framework import viewsets
+from rest_framework.permissions import BasePermission
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from acmin.models import Permission, PermissionItem
 from acmin.serializer import get_serializer
-from acmin.utils import import_class, attr
+from acmin.utils import import_class, attr, param
 
 logger = logging.getLogger(__name__)
 
@@ -28,33 +29,35 @@ class BaseViewSet(viewsets.ModelViewSet):
         return serializer
 
     def get_queryset(self):
-        model = attr(self, "Meta.model")
-        return model.objects.all()
+        queryset = attr(self, "Meta.model").objects.all()
+        sorter = param(self.request, "sorter")
+        if sorter:
+            queryset = queryset.order_by(sorter)
+        return queryset
 
     def get_paginated_response(self, data):
         paginator = self.paginator.page.paginator
         count = paginator.count
         return Response(dict(
-            data=(dict(list=data, total=count)),
+            data=dict(
+                list=data,
+                total=count,
+                pageSize=paginator.per_page,
+                pages=paginator.num_pages,
+                current=int(self.request.GET.get("page", 1))
+            ),
             status=200,
             message="success"
-            # list=data,
-            # pagination=dict(
-            #    total=count,
-            #    pageSize=paginator.per_page,
-            #    pages=paginator.num_pages,
-            #    current=int(self.request.GET.get("page", 1))
-
         ))
 
 
-class ViewPermission(IsAuthenticated):
+class ViewPermission(BasePermission):
     def has_permission(self, request, view):
-        return super().has_permission(request, view) and Permission.has_permission(request.user, view.Meta.model, PermissionItem.listable)
+        return Permission.has_permission(request.user, view.Meta.model, PermissionItem.listable)
 
 
 class AuthenticatedBaseViewSet(BaseViewSet):
-    permission_classes = (ViewPermission,)
+    permission_classes = (IsAuthenticated, ViewPermission,)
 
 
 def get_viewset(model_class, login_required=True):
