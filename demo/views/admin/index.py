@@ -21,7 +21,7 @@ def get_nodes(user):
         for model in models:
             if Permission.has_permission(user, model, PermissionItem.listable):
                 class_name = model.__name__
-                leaves.append((class_name, attr(model, "_meta.verbose_name")))
+                leaves.append((class_name, attr(ContentType.get_by_user_and_model(user, model), "verbose_name")))
                 if not default_node:
                     default_node = class_name
         if leaves:

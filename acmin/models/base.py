@@ -53,4 +53,4 @@ class AcminModel(models.Model, metaclass=BaseMeta):
     def get_contenttype_key(cls):
         app = cls.__module__.split(".")[0]
         name = cls.__name__
-        return app + "." + name
+        return app + "_" + name

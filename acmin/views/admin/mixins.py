@@ -1,4 +1,4 @@
-from acmin.models import Permission
+from acmin.models import Permission, ContentType
 from acmin.utils import attr
 
 
@@ -55,6 +55,6 @@ class ContextMixin(object):
         context.update({
             'model': self.model,
             'model_name': self.model.__name__,
-            'model_verbose_name': attr(self, 'model._meta.verbose_name'),
+            'model_verbose_name': attr(ContentType.get_by_user_and_model(self.user, model), "verbose_name"),
         })
         return context

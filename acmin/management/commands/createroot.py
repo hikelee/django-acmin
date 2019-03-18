@@ -4,11 +4,11 @@ from django.core.management.base import BaseCommand
 class Command(BaseCommand):
     def handle(self, *args, **options):
         from acmin.models import Group, User, GroupPermission, SuperPermissionModel, ContentType
-        group = Group.objects.update_or_create(name="root")[0]
+        group = Group.objects.update_or_create(name="admin")[0]
 
-        user = User.objects.filter(username="root").first()
+        user = User.objects.filter(username="admin").first()
         if not user:
-            user = User(group=group, username="root", title="root")
+            user = User(group=group, username="admin", title="admin")
             user.set_password("123456")
             user.save()
 
@@ -18,7 +18,7 @@ class Command(BaseCommand):
             GroupPermission.objects.create(
                 group=group,
                 contenttype=contenttype,
-                name="root",
+                name="admin",
                 creatable=True,
                 savable=True,
                 removable=True,

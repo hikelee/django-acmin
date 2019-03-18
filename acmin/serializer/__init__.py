@@ -25,7 +25,7 @@ class BaseSerializer(serializers.ModelSerializer):
         request = attr(self, "_context.request")
         model = attr(self.Meta, "model")
         fields = Field.get_fields(request.user, model)
-        names = [field.attribute for field in fields]
+        names = [field.attribute for field in fields if "." not in field.attribute]
 
         return names
 
