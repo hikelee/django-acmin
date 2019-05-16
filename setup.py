@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
-import os
 
 from setuptools import find_packages, setup
 
-version = "0.2.12"
-
-with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'acmin-requirements.txt')) as f:
-    required = f.read().splitlines()
+version = "0.2.13"
 
 setup(
     name='django-acmin',
@@ -30,7 +26,15 @@ setup(
     ],
     license='BSD',
     packages=find_packages(),
-    install_requires=required,
+    install_requires=[
+        "Django>=2.1.2",
+        "requests",
+        "python_utils",
+        "xlwt",
+        "filelock",
+        "django-bulk-update",
+        "djangorestframework"
+    ],
     include_package_data=True,
     zip_safe=False,
 )
