@@ -92,7 +92,15 @@
         }
 
         showDateTimePicker($(".datepicker"), 'YYYY-MM-DD');
-        $('textarea').attr("rows", 3);
+        //$('textarea').attr("rows", 3);
+        $(function () {
+            $("textarea").each(function () {//自适应高度
+                this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
+            }).on('input', function () {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
         {% autoescape off %}
             $().ready(function () {
                 addChangeEvent({{ group_fields_json }});
