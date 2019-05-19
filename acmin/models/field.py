@@ -173,6 +173,10 @@ class Field(BaseField, CommonField):
         return f"{self.base},{self.verbose_name}({self.attribute})"
 
     @classmethod
+    def get_default_fields(cls, model):
+        return get_default_fields()[model]
+
+    @classmethod
     def get_default_field(cls, model, attribute):
         return get_default_fields()[model].get(attribute)
 
