@@ -3,7 +3,7 @@
 
 from setuptools import find_packages, setup
 
-version = "0.2.16"
+version = "0.2.17"
 
 setup(
     name='django-acmin',
@@ -27,12 +27,11 @@ setup(
     license='BSD',
     packages=find_packages(),
     install_requires=[
-        "Django>=2.1.2",
+        "Django>=2.2.2",
         "requests",
         "python_utils",
         "xlwt",
         "filelock",
-        "django-bulk-update",
         "djangorestframework"
     ],
     include_package_data=True,

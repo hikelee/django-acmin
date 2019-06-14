@@ -112,18 +112,17 @@
                                                                 {{ instance|display:field.attribute|truncate }}
                                                             </a>
                                                         {% endwith %}
-                                                    {% elif field.python_type == 'django.db.models.fields.BooleanField' and field.editable and instance.instance_permission.savable %}
-                                                        <input name="{{ field.attribute }}" type="checkbox" onchange="partialUpdate('{{ model_name }}',{{ instance.id }},this,true)"
-                                                                {% if instance|attr:field.attribute %}
-                                                               checked
-                                                                {% endif %}
-                                                        />
-                                                    {% elif field.python_type == 'django.db.models.fields.IntegerField' and field.editable and instance.instance_permission.savable %}
-                                                        <input class="ace" style="width:100px"
-                                                               name="{{ field.attribute }}"
-                                                               type="number"
-                                                               onchange="partialUpdate('{{ model_name }}',{{ instance.id }},this)"
-                                                               value="{{ instance|attr:field.attribute }}"/>
+                                                    {% elif field.list_editable and instance.instance_permission.savable %}
+                                                        {% if field.python_type == 'django.db.models.fields.BooleanField' %}
+                                                            <input name="{{ field.attribute }}" type="checkbox" onchange="partialUpdate('{{ model_name }}',{{ instance.id }},this,true)"
+                                                                    {% if instance|attr:field.attribute %} checked {% endif %} />
+                                                        {% elif field.python_type == 'django.db.models.fields.IntegerField' %}
+                                                            <input class="ace" style="width:100px" name="{{ field.attribute }}" type="number" onchange="partialUpdate('{{ model_name }}',{{ instance.id }},this)"
+                                                                   value="{{ instance|attr:field.attribute }}"/>
+                                                        {% else %}
+                                                            <input class="ace" style="width:100px" name="{{ field.attribute }}" type="text" onchange="partialUpdate('{{ model_name }}',{{ instance.id }},this)"
+                                                                   value="{{ instance|attr:field.attribute }}"/>
+                                                        {% endif %}
                                                     {% else %}
                                                         {{ instance|display:field.attribute|truncate }}
                                                     {% endif %}

@@ -5,7 +5,6 @@ from django.db import models
 from django.db.models import ForeignKey
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from django_bulk_update.helper import bulk_update
 from filelock import FileLock
 
 from acmin.utils import first, attr
@@ -112,7 +111,8 @@ class CommonField(AcminModel):
     nullable = models.BooleanField("可以为空", default=False)
     unique = models.BooleanField("是否唯一性", default=False)
     default = models.CharField("默认值", max_length=500, null=True, blank=True)
-    editable = models.BooleanField("可编辑", default=True)
+    form_editable = models.BooleanField("表单可编辑", default=True)
+    list_editable = models.BooleanField("列表可编辑", default=True)
     searchable = models.BooleanField("可搜索", default=False)
     filterable = models.BooleanField("可过滤", default=True)
     help_text = models.TextField("帮助文本", null=True, blank=True)
@@ -291,7 +291,7 @@ def init_fields(type_map):
                     if need_update:
                         updates.append(exists_field)
                         if len(updates) > 50:
-                            bulk_update(updates, update_fields=basic_fields)
+                            Field.objects.bulk_update(updates, fields=basic_fields)
                             updates.clear()
                 else:
                     new.append(field)
@@ -306,7 +306,8 @@ def init_fields(type_map):
                 attributes.append(attribute)
                 field_type = type(field)
                 python_type = f"{field_type.__module__}.{field_type.__name__}"
-                editable = formable = attr(field, "editable") and attribute != "id"
+                form_editable = formable = attr(field, "form_editable", True) and attribute != "id"
+                list_editable = attr(field, "list_editable", False) and attribute != "id"
                 check(Field(
                     base=base,
                     attribute=attribute,
@@ -319,8 +320,9 @@ def init_fields(type_map):
                     sequence=sequence,
                     verbose_name=verbose_name,
                     nullable=attr(field, "null"),
-                    editable=editable,
-                    formable=formable,
+                    form_editable=form_editable is not False,
+                    list_editable=list_editable is not False,
+                    formable=formable is not False,
                     help_text=attr(field, "help_text"),
                 ))
 
@@ -335,7 +337,8 @@ def init_fields(type_map):
                         field = attr(cls, f"{name}.field")
                         verbose_name = attr(field, "_verbose_name")
                         cls = attr(field, f"remote_field.model")
-                    editable = formable = attr(field, "editable") and sub_attribute != "id"
+                    form_editable = formable = attr(field, "form_editable", True) and sub_attribute != "id"
+                    list_editable = attr(field, "list_editable", False) and sub_attribute != "id"
                     python_type = ForeignKey.__module__ + "." + ForeignKey.__name__
                     check(Field(
                         base=base,
@@ -345,8 +348,9 @@ def init_fields(type_map):
                         contenttype=type_map[cls],
                         verbose_name=verbose_name or attr(cls, "_meta.verbose_name") or sub_attribute,
                         nullable=attr(field, "null"),
-                        editable=editable,
-                        formable=formable,
+                        form_editable=form_editable is not False,
+                        list_editable=list_editable is not False,
+                        formable=formable is not False,
                         python_type=python_type,
                         data_type=DATA_TYPES.get(python_type.split(".")[-1], "string"),
                         max_length=attr(field, "max_length"),
@@ -358,4 +362,4 @@ def init_fields(type_map):
 
             Field.objects.filter(base=base).exclude(attribute__in=attributes).delete()
     Field.objects.bulk_create(new)
-    bulk_update(updates, update_fields=basic_fields)
+    Field.objects.bulk_update(updates, fields=basic_fields)
