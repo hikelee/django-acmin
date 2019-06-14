@@ -112,7 +112,7 @@ class CommonField(AcminModel):
     unique = models.BooleanField("是否唯一性", default=False)
     default = models.CharField("默认值", max_length=500, null=True, blank=True)
     form_editable = models.BooleanField("表单可编辑", default=True)
-    list_editable = models.BooleanField("列表可编辑", default=True)
+    list_editable = models.BooleanField("列表可编辑", default=False)
     searchable = models.BooleanField("可搜索", default=False)
     filterable = models.BooleanField("可过滤", default=True)
     help_text = models.TextField("帮助文本", null=True, blank=True)
