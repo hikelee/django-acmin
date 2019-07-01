@@ -5,6 +5,7 @@
 {% load resource %}
 {% load concat %}
 {% load define %}
+{% load string %}
 {% block breadcrumb %}
     <ul class="breadcrumb">
         <li><a href="#!name=/{{ model_name }}">{{ model_verbose_name }}</a></li>
@@ -113,7 +114,15 @@
                                                             </a>
                                                         {% endwith %}
                                                     {% elif field.list_editable and instance.instance_permission.savable %}
-                                                        {% if field.python_type == 'django.db.models.fields.BooleanField' %}
+                                                        {% if field.choices %}
+                                                            <select name="{{ field.attribute }}" onchange="partialUpdate('{{ model_name }}',{{ instance.id }},this,true)">
+                                                                {% for c in field.choices %}
+                                                                    <option value="{{ c.value }}"
+                                                                            {% ifequal instance|attr:field.attribute|string c.value %} selected {% endifequal %}
+                                                                    >{{ c.title }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        {% elif field.python_type == 'django.db.models.fields.BooleanField' %}
                                                             <input name="{{ field.attribute }}" type="checkbox" onchange="partialUpdate('{{ model_name }}',{{ instance.id }},this,true)"
                                                                     {% if instance|attr:field.attribute %} checked {% endif %} />
                                                         {% elif field.python_type == 'django.db.models.fields.IntegerField' %}

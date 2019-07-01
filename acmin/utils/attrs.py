@@ -25,9 +25,18 @@ def attr(obj, attribute, default=None):
 
 
 def display(obj, attribute):
-    result = attr(obj, attribute, default="")
-    if isinstance(result, bool):
-        result = "是" if result else '否'
-    elif isinstance(result, datetime.datetime):
-        result = result.strftime("%Y-%m-%d %H:%M:%S")
-    return result
+    from acmin.models import Field, Choice
+    if obj:
+        result = attr(obj, attribute, default="")
+        field = Field.get_default_field(obj.__class__, attribute)
+        if field:
+            for choice in Choice.get_choices(field) or []:
+                if choice.value == f"{result}":
+                    return choice.title
+
+        if isinstance(result, bool):
+            result = "是" if result else '否'
+        elif isinstance(result, datetime.datetime):
+            result = result.strftime("%Y-%m-%d %H:%M:%S")
+        return result
+    return ""

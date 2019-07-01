@@ -62,7 +62,7 @@ class ToolbarSearchFormMixin(SearchMixin):
         group_fields = Field.get_group_fields(user, self.model, has_contenttype=True)
         params = self.get_toolbar_search_params()
         for fields in group_fields:
-            fields = [field for field in  fields  if field.filterable]
+            fields = [field for field in fields if field.filterable]
             last_options = None
             last_default_value = None
             for index in range(len(fields)):
@@ -152,8 +152,13 @@ class AdminListView(
     form_class = None
 
     def get_model_list_fields(self):
-        return [field for field in Field.get_fields(self.request.user, self.model, has_contenttype=False) if
-                field.listable]
+        from acmin.models import Choice
+        result = []
+        for field in Field.get_fields(self.request.user, self.model, has_contenttype=False):
+            if field.listable:
+                field.choices = Choice.get_choices(field)
+            result.append(field)
+        return result
 
     def get_relation_fields(self):
         user = self.request.user
