@@ -157,7 +157,7 @@ class AdminListView(
         for field in Field.get_fields(self.request.user, self.model, has_contenttype=False):
             if field.listable:
                 field.choices = Choice.get_choices(field)
-            result.append(field)
+                result.append(field)
         return result
 
     def get_relation_fields(self):
