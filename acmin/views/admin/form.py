@@ -39,6 +39,9 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
         self.add_foreign_field_choices(context["form"], attr(context, "object"), group_fields)
         return context
 
+    def get_option_query(self, cls):
+        return cls.objects
+
     def add_foreign_field_choices(self, form, obj, group_fields):
         choices = []
         for foreign_fields in group_fields:
@@ -51,7 +54,7 @@ class AdminFormView(SuccessMessageMixin, ContextMixin, AccessMixin):
                 queryset = None
                 attribute = field.attribute
                 if index == 0 or last_value or last_field.nullable:
-                    queryset = cls.objects
+                    queryset = self.get_option_query(cls)
                     if last_value:
                         filters = {last_field.attribute[len(attribute) + 1:] + "_id": last_value}
                         queryset = queryset.filter(**filters)

@@ -3,7 +3,7 @@
 
 from setuptools import find_packages, setup
 
-version = "1.0.1"
+version = "1.0.2"
 
 setup(
     name='django-acmin',
